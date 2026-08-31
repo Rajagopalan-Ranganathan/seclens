@@ -287,20 +287,49 @@ make openapi                   # Regenerate openapi.yaml
 make openapi-check             # Verify it matches (CI runs this)
 ```
 
-## Before Submitting Changes
+## Before Submitting Changes (PR Checklist)
+
+Every change MUST pass these checks locally before creating a PR. Do NOT create a PR until all steps pass.
+
+### Required checks (always run)
 
 ```bash
-make all                      # Lint + test + openapi-check must all pass
-make docker-build             # Container must build
-# If you changed the API:
-#   Run `make openapi` to regenerate openapi.yaml
-#   Update docs/api-reference.md
-# If you changed scoring:
-#   Update docs/scoring.md with new formulas/weights
-# If you added a data source:
-#   Update docs/adapters.md
-# If you changed dependencies:
-#   Run `make lock` to update requirements.lock
-# If you added device/hardware aliases:
-#   Update docs/domain-models.md if needed
+source .venv/bin/activate
+ruff check src/ tests/        # Lint — must be clean
+ruff format --check src/ tests/  # Formatting — must be clean (fix with: ruff format src/ tests/)
+pytest -v tests/              # Tests — all must pass
+make openapi-check            # OpenAPI spec — must be up to date
 ```
+
+Or run all at once:
+
+```bash
+make all                      # Lint + test + openapi-check (the full gate)
+```
+
+### Conditional checks (run when applicable)
+
+```bash
+# If you changed the API:
+make openapi                  # Regenerate openapi.yaml
+# Update docs/api-reference.md
+
+# If you changed scoring:
+# Update docs/scoring.md with new formulas/weights
+
+# If you added a data source:
+# Update docs/adapters.md
+
+# If you changed dependencies:
+make lock                     # Update requirements.lock
+
+# If you added device/hardware aliases:
+# Update docs/domain-models.md if needed
+```
+
+### Creating the PR
+
+1. Always create a **new branch from `main`**: `git checkout main && git pull && git checkout -b <branch>`
+2. Commit with `--no-verify` only if pre-commit hooks block on `no-commit-to-branch` (expected for feature branches created locally off main)
+3. Push and create a new PR — **never push to an existing/merged PR branch**
+4. PR title should follow conventional commits: `feat:`, `fix:`, `docs:`, `style:`, `refactor:`, `test:`, `chore:`
