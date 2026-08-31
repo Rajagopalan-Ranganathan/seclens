@@ -230,6 +230,9 @@ class GitHubApiFetcher(GitHubFetcherPort):
                 return {} if accept_404 else None
             if resp.status_code == 204:
                 return {}
+            if resp.status_code == 403:
+                logger.warning("GitHub API rate-limited or forbidden: %s", url)
+                return None
             resp.raise_for_status()
             return resp.json()
         except (httpx.HTTPError, OSError, ValueError):

@@ -21,10 +21,10 @@ class RepoSecuritySignals:
     open_issues_count: int = 0
 
     @property
-    def is_actively_maintained(self) -> bool:
+    def is_actively_maintained(self) -> bool | None:
         if self.archived:
             return False
         if self.last_push_date is None:
-            return False
+            return None
         days_since = (_dt.datetime.now(tz=_dt.UTC).date() - self.last_push_date).days
         return days_since < 365
