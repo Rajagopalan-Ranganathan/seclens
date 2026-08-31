@@ -353,7 +353,7 @@ seclens/
 │   ├── secret_scanning.yml        # Push protection for secrets
 │   ├── CODEOWNERS                 # Required reviewers
 │   └── workflows/
-│       ├── ci.yml                 # Lint + test + CodeQL + Docker build
+│       ├── ci.yml                 # Lint + test + openapi-check + CodeQL + Docker build
 │       └── release.yml            # Docker build + push on tags
 ├── Containerfile                  # Multi-stage Hummingbird build
 ├── compose.yml                    # Docker Compose for local dev
@@ -362,7 +362,10 @@ seclens/
 ├── .secrets.baseline              # detect-secrets baseline
 ├── requirements.lock              # Pinned production dependencies
 ├── pyproject.toml                 # Dependencies & build config
-├── Makefile                       # Dev + Docker + security shortcuts
+├── scripts/
+│   └── generate_openapi.py        # OpenAPI spec generator + drift checker
+├── openapi.yaml                   # Auto-generated OpenAPI 3.1 spec
+├── Makefile                       # Dev + Docker + security + OpenAPI shortcuts
 ├── SECURITY.md                    # Vulnerability disclosure policy
 ├── CONTRIBUTING.md                # Development guidelines
 └── AGENTS.md                      # AI agent instructions
@@ -420,6 +423,7 @@ flowchart TD
     subgraph ci [CI — every PR & push to main]
         Lint[ruff check + format]
         Test[pytest]
+        OpenAPI[openapi-check — spec drift]
         CodeQL[CodeQL — security-extended]
         Docker[Docker build verify]
         Audit[pip-audit]

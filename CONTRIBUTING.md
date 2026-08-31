@@ -17,8 +17,8 @@ pre-commit install
 
 1. Create a feature branch from `main`
 2. Make your changes
-3. Run the test suite: `make test`
-4. Run the linter: `make lint`
+3. Run `make all` (lint + test + openapi-check)
+4. If you changed the API: `make openapi` to regenerate `openapi.yaml`
 5. Commit your changes (pre-commit hooks will run automatically)
 6. Open a pull request
 
@@ -56,7 +56,7 @@ make docker-stop   # stop the container
 The `main` branch has the following protections (configured via GitHub UI):
 
 - **Required PR reviews**: At least 1 approval before merge
-- **Required status checks**: `lint`, `test`, `codeql`, and `docker-build` must pass
+- **Required status checks**: `lint`, `test`, `openapi-check`, `codeql`, and `docker-build` must pass
 - **No force pushes**: History is immutable on `main`
 - **No direct commits**: All changes go through pull requests
 

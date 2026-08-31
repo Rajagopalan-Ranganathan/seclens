@@ -186,7 +186,7 @@ Evaluates the repository's security configuration via GitHub API.
 | Default branch protection | 25 |
 | Secret scanning enabled | 20 |
 | Code scanning (CodeQL) | 15 |
-| Dependabot enabled | 15 |
+| Dependency updates enabled | 15 |
 | License declared | 10 |
 | Actively maintained | 15 |
 

@@ -22,6 +22,7 @@ Security-focused search engine for scoring software products and GitHub projects
 | [SECURITY.md](../SECURITY.md) | Vulnerability disclosure policy |
 | [CONTRIBUTING.md](../CONTRIBUTING.md) | Development setup, workflow, branch rules, commit conventions |
 | [Containerfile](../Containerfile) | Multi-stage Docker build with Red Hat Hummingbird images |
+| [openapi.yaml](../openapi.yaml) | Auto-generated OpenAPI 3.1 spec (do not edit by hand) |
 
 ### Quick Reference
 
@@ -33,6 +34,9 @@ Security-focused search engine for scoring software products and GitHub projects
 | Generate SBOM | `make sbom` |
 | Run pre-commit hooks | `make pre-commit` |
 | Pin dependencies | `make lock` |
+| Regenerate OpenAPI spec | `make openapi` |
+| Verify spec is current | `make openapi-check` |
+| Run all gates | `make all` |
 
 ## For AI Agents
 
@@ -42,9 +46,10 @@ See [AGENTS.md](../AGENTS.md) in the project root for agent-specific instruction
 
 ```bash
 source .venv/bin/activate
-python -c "from seclens.main import cli; cli()" serve    # http://localhost:8000
-python -c "from seclens.main import cli; cli()" sync     # Populate local DB
-pytest -v tests/                                          # 70+ tests
+make dev                     # Install deps + pre-commit hooks
+make serve                   # http://localhost:8000
+make sync                    # Populate local DB
+make all                     # Lint + test + openapi-check
 ```
 
 ## Architecture at a Glance

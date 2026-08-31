@@ -105,7 +105,8 @@ graph LR
 - `/dependency-graph/sbom` — SPDX SBOM with all dependencies
 - `/contents/{path}` — Raw manifest file content (base64 encoded)
 - `/branches/{branch}` — Branch protection status
-- `/vulnerability-alerts` — Dependabot status (204 = enabled)
+- `/vulnerability-alerts` — Dependabot alert status (204 = enabled)
+- `/contents/{config_path}` — Checks for Renovate (`.renovaterc`, `renovate.json`), Dependabot (`.github/dependabot.yml`), and Konflux (`.tekton/`) config files to detect dependency update tooling
 
 **Manifest parser** (`manifest_parser.py`) supports:
 

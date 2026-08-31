@@ -138,7 +138,7 @@ Analyze a GitHub repository's security posture.
     "default_branch_protected": true,
     "secret_scanning_enabled": null,
     "code_scanning_enabled": null,
-    "dependabot_enabled": true,
+    "dependency_updates_enabled": true,
     "license_name": "BSD-3-Clause",
     "last_push_date": "2026-08-28",
     "archived": false,

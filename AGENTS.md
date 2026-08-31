@@ -13,9 +13,11 @@ A security-focused search engine that scores the security posture of:
 ```bash
 cd /Users/rarangan/go/src/github.com/seclens
 source .venv/bin/activate
-python -c "from seclens.main import cli; cli()" serve    # Start server on :8000
-python -c "from seclens.main import cli; cli()" sync     # Sync NVD/EPSS/KEV data
-pytest -v tests/                                          # Run all tests (70+)
+make dev                      # Install deps + pre-commit hooks
+make serve                    # Start server on :8000
+make sync                     # Sync NVD/EPSS/KEV data
+make test                     # Run all tests (70+)
+make all                      # Lint + test + openapi-check
 ```
 
 ## Architecture (Read First)
@@ -28,6 +30,7 @@ Detailed docs are in `docs/`. The key files:
 - [docs/adapters.md](docs/adapters.md) -- data sources and how to add new ones
 - [docs/api-reference.md](docs/api-reference.md) -- all API endpoints
 - [docs/frontend.md](docs/frontend.md) -- frontend architecture
+- [docs/roadmap.md](docs/roadmap.md) -- future features (device BOM scoring, privacy, vendor expansion)
 
 ### Layer Rules (Critical)
 
@@ -67,12 +70,21 @@ Follow the Red Hat pattern in `adapters/fetchers/redhat_fetcher.py`:
 4. Update frontend `breakdownItem()` calls in `frontend/static/js/app.js`
 5. Update `docs/scoring.md`
 
+### Adding a hardware/device alias
+
+1. Add entry to `PRODUCT_ALIASES` in `domain/models/product.py` — format: `"friendly name": ("part", "vendor", "product")`
+2. Add vendor to `VENDOR_DISPLAY` if new vendor
+3. Add product to `PRODUCT_DISPLAY` if new product
+4. Run `make openapi` to regenerate the OpenAPI spec
+
 ### Adding an API endpoint
 
 1. Add Pydantic schema(s) in `api/schemas.py`
 2. Add route in `api/router.py`
 3. Add mapping function `_xxx_to_response()` in `api/router.py`
 4. Wire any new services in `api/dependencies.py`
+5. Run `make openapi` to regenerate `openapi.yaml`
+6. Update `docs/api-reference.md`
 
 ### Adding a manifest parser
 
@@ -128,8 +140,11 @@ Follow the Red Hat pattern in `adapters/fetchers/redhat_fetcher.py`:
 | Grade thresholds | `src/seclens/domain/models/score.py` (line ~20) |
 | Database schema | `src/seclens/adapters/persistence/sqlite_repository.py` (`_SCHEMA_SQL`) |
 | All API routes | `src/seclens/api/router.py` |
+| OpenAPI spec | `openapi.yaml` (auto-generated, do not edit by hand) |
+| OpenAPI generator | `scripts/generate_openapi.py` |
 | Frontend app logic | `frontend/static/js/app.js` |
 | Frontend styles | `frontend/static/css/style.css` |
+| Device/HW aliases | `src/seclens/domain/models/product.py` (`PRODUCT_ALIASES`) |
 
 ## Gotchas
 
@@ -172,7 +187,7 @@ make docker-logs               # Tail container logs
 
 | Workflow | Trigger | Jobs |
 |----------|---------|------|
-| `ci.yml` | Push to `main`, PRs | lint, test, codeql, docker-build, pip-audit |
+| `ci.yml` | Push to `main`, PRs | lint, test, openapi-check, codeql, docker-build, pip-audit |
 | `release.yml` | Tag push (`v*`) | Build + push Docker image, generate SBOM |
 
 ### Pre-commit Hooks
@@ -189,6 +204,8 @@ Installed via `make dev`. Hooks run automatically on `git commit`:
 make audit                     # pip-audit: check deps for known vulns
 make sbom                      # Generate CycloneDX SBOM (sbom.cdx.json)
 make pre-commit                # Run all pre-commit hooks manually
+make openapi                   # Regenerate openapi.yaml from code
+make openapi-check             # Verify openapi.yaml matches code (CI uses this)
 ```
 
 ## Key Security Files
@@ -206,19 +223,60 @@ make pre-commit                # Run all pre-commit hooks manually
 | `Containerfile` | Multi-stage Hummingbird build |
 | `compose.yml` | Docker Compose for local dev |
 | `requirements.lock` | Pinned production dependencies |
+| `openapi.yaml` | Auto-generated OpenAPI 3.1 spec (do not edit by hand) |
+| `scripts/generate_openapi.py` | OpenAPI spec generator + drift checker |
+
+## Makefile Reference
+
+| Target | Purpose |
+|--------|---------|
+| `make all` | Run lint + test + openapi-check (the full gate) |
+| `make dev` | Install deps + pre-commit hooks |
+| `make serve` | Start the server on :8000 |
+| `make sync` | Sync NVD/EPSS/KEV data to local DB |
+| `make test` | Run pytest |
+| `make lint` | ruff check + format check |
+| `make format` | Auto-format code with ruff |
+| `make openapi` | Regenerate `openapi.yaml` from code |
+| `make openapi-check` | Verify `openapi.yaml` is up to date |
+| `make docker-build` | Build container image |
+| `make docker-run` | Start via docker compose |
+| `make docker-stop` | Stop containers |
+| `make docker-logs` | Tail container logs |
+| `make audit` | pip-audit dependency vulnerability scan |
+| `make sbom` | Generate CycloneDX SBOM |
+| `make lock` | Regenerate `requirements.lock` |
+| `make pre-commit` | Run all pre-commit hooks |
+| `make clean` | Remove build artifacts |
+
+## OpenAPI Spec
+
+The API spec is auto-generated from FastAPI route definitions and Pydantic schemas. **Never edit `openapi.yaml` by hand.**
+
+- Swagger UI: http://localhost:8000/docs (when server is running)
+- ReDoc: http://localhost:8000/redoc
+- Raw spec: http://localhost:8000/openapi.json
+
+To update after API changes:
+```bash
+make openapi                   # Regenerate openapi.yaml
+make openapi-check             # Verify it matches (CI runs this)
+```
 
 ## Before Submitting Changes
 
 ```bash
-pytest -v tests/              # All tests must pass
-make lint                     # Lint must pass
+make all                      # Lint + test + openapi-check must all pass
 make docker-build             # Container must build
+# If you changed the API:
+#   Run `make openapi` to regenerate openapi.yaml
+#   Update docs/api-reference.md
 # If you changed scoring:
 #   Update docs/scoring.md with new formulas/weights
 # If you added a data source:
 #   Update docs/adapters.md
-# If you added an API endpoint:
-#   Update docs/api-reference.md
 # If you changed dependencies:
 #   Run `make lock` to update requirements.lock
+# If you added device/hardware aliases:
+#   Update docs/domain-models.md if needed
 ```
