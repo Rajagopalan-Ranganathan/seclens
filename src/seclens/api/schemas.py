@@ -100,6 +100,9 @@ class SearchResponse(BaseModel):
     query: str
     results: list[ProductResponse]
     total: int
+    page: int = 1
+    per_page: int = 20
+    total_pages: int = 1
 
 
 class SyncResponse(BaseModel):

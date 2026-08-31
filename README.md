@@ -5,6 +5,10 @@ Security search engine — given any software or hardware, get a security scorec
 ## Quick Start
 
 ```bash
+# Create and activate a virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
 # Install (with pre-commit hooks)
 make dev
 

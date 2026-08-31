@@ -102,9 +102,15 @@ async function performSearch(query) {
     }
 
     showLoading('Searching vulnerability databases...');
+    await _fetchSearchPage(query, 1);
+}
 
+let _lastSearchQuery = '';
+
+async function _fetchSearchPage(query, page) {
+    _lastSearchQuery = query;
     try {
-        const resp = await fetch(`${API}/search?q=${encodeURIComponent(query)}`);
+        const resp = await fetch(`${API}/search?q=${encodeURIComponent(query)}&page=${page}&per_page=20`);
         if (!resp.ok) throw new Error(`Search failed: ${resp.status}`);
         const data = await resp.json();
 
@@ -114,6 +120,13 @@ async function performSearch(query) {
         hideLoading();
         showError(`Search failed: ${err.message}`);
     }
+}
+
+function goToSearchPage(page) {
+    if (!_lastSearchQuery) return;
+    showLoading('Searching vulnerability databases...');
+    _fetchSearchPage(_lastSearchQuery, page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 async function analyzeProject(url) {
@@ -186,6 +199,24 @@ function renderResults(data) {
         `;
 
         resultsList.appendChild(card);
+    }
+
+    if (data.total_pages > 1) {
+        const pag = document.createElement('div');
+        pag.className = 'pagination';
+        let pHtml = `<button class="page-btn" ${data.page <= 1 ? 'disabled' : ''} onclick="goToSearchPage(${data.page - 1})">&laquo; Prev</button>`;
+        const range = paginationRange(data.page, data.total_pages);
+        for (const p of range) {
+            if (p === '...') {
+                pHtml += `<span class="page-ellipsis">&hellip;</span>`;
+            } else {
+                pHtml += `<button class="page-btn ${p === data.page ? 'active' : ''}" onclick="goToSearchPage(${p})">${p}</button>`;
+            }
+        }
+        pHtml += `<button class="page-btn" ${data.page >= data.total_pages ? 'disabled' : ''} onclick="goToSearchPage(${data.page + 1})">Next &raquo;</button>`;
+        pHtml += `<span class="page-info">${(data.page - 1) * data.per_page + 1}&ndash;${Math.min(data.page * data.per_page, data.total)} of ${data.total}</span>`;
+        pag.innerHTML = pHtml;
+        resultsList.appendChild(pag);
     }
 
     show(resultsSection);
