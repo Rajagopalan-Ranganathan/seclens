@@ -40,13 +40,23 @@ router = APIRouter(prefix="/api/v1")
 
 
 @router.get("/search", response_model=SearchResponse)
-async def search(q: str = Query(..., min_length=1, description="Search query")):
+async def search(
+    q: str = Query(..., min_length=1, description="Search query"),
+    page: int = Query(1, ge=1, description="Page number"),
+    per_page: int = Query(20, ge=1, le=100, description="Results per page"),
+):
     svc = get_search_service()
     privacy_svc = get_privacy_service()
-    products = await svc.search(q)
+    all_products = await svc.search(q, limit=200)
+
+    total = len(all_products)
+    total_pages = max(1, (total + per_page - 1) // per_page)
+    page = min(page, total_pages)
+    start = (page - 1) * per_page
+    page_products = all_products[start : start + per_page]
 
     results = []
-    for p in products:
+    for p in page_products:
         resp = _product_to_response(p)
         try:
             ps = await privacy_svc.score_product(p.cpe.vendor, p.cpe.product)
@@ -59,7 +69,10 @@ async def search(q: str = Query(..., min_length=1, description="Search query")):
     return SearchResponse(
         query=q,
         results=results,
-        total=len(results),
+        total=total,
+        page=page,
+        per_page=per_page,
+        total_pages=total_pages,
     )
 
 
