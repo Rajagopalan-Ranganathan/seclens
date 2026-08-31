@@ -15,13 +15,14 @@ COPY frontend/ /opt/app/frontend/
 
 RUN pip3 install --no-cache-dir /opt/app
 
+RUN mkdir -p /opt/app/data && chown 1001:0 /opt/app/data
+
 # Stage 2: Production — distroless, no shell, minimal attack surface
 FROM registry.access.redhat.com/hi/python:3.12
 
-USER 0
-
 COPY --from=builder /opt/venv /opt/venv
 COPY --from=builder /opt/app/frontend /opt/app/frontend
+COPY --from=builder --chown=1001:0 /opt/app/data /opt/app/data
 
 ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
@@ -29,10 +30,7 @@ ENV PATH="/opt/venv/bin:$PATH" \
 
 WORKDIR /opt/app
 
-ARG APP_USER=1001
-RUN mkdir -p /opt/app/data && chown ${APP_USER}:0 /opt/app/data
-
-USER ${APP_USER}
+USER 1001
 
 EXPOSE 8000
 

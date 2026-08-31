@@ -106,8 +106,5 @@ jobs:
       - name: Install pip-audit
         run: pip install pip-audit
 
-      - name: Install project dependencies
-        run: pip install -e .
-
       - name: Audit dependencies
-        run: pip-audit --strict --desc --skip-editable
+        run: pip-audit --strict --desc -r requirements.lock
