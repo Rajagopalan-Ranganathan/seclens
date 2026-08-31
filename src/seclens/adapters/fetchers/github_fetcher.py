@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 import logging
 import os
+import re
 from datetime import date
 
 import httpx
@@ -17,6 +18,13 @@ from .manifest_parser import PREFERRED_MANIFESTS, parse_manifest
 logger = logging.getLogger(__name__)
 
 GH_API = "https://api.github.com"
+
+_CONTROL_CHARS = re.compile(r"[\x00-\x1f\x7f]")
+
+
+def _sanitize_log(value: str) -> str:
+    """Strip control characters to prevent log injection."""
+    return _CONTROL_CHARS.sub("", value)
 
 
 class GitHubApiFetcher(GitHubFetcherPort):
@@ -40,13 +48,15 @@ class GitHubApiFetcher(GitHubFetcherPort):
                 resp = await client.get(url, headers=self._headers())
                 if resp.status_code == 404:
                     logger.info(
-                        "SBOM not available for %s/%s, will use manifest fallback", owner, repo
+                        "SBOM not available for %s/%s, will use manifest fallback",
+                        _sanitize_log(owner),
+                        _sanitize_log(repo),
                     )
                     return []
                 resp.raise_for_status()
                 data = resp.json()
         except (httpx.HTTPError, OSError, ValueError):
-            logger.warning("Failed to fetch SBOM for %s/%s", owner, repo)
+            logger.warning("Failed to fetch SBOM for %s/%s", _sanitize_log(owner), _sanitize_log(repo))
             return []
 
         return self._parse_spdx(data)
@@ -96,7 +106,11 @@ class GitHubApiFetcher(GitHubFetcherPort):
                     parsed = parse_manifest(filename, content)
                     if parsed:
                         logger.info(
-                            "Parsed %d deps from %s/%s/%s", len(parsed), owner, repo, filename
+                            "Parsed %d deps from %s/%s/%s",
+                            len(parsed),
+                            _sanitize_log(owner),
+                            _sanitize_log(repo),
+                            filename,
                         )
                         deps.extend(parsed)
                         break
@@ -231,12 +245,12 @@ class GitHubApiFetcher(GitHubFetcherPort):
             if resp.status_code == 204:
                 return {}
             if resp.status_code == 403:
-                logger.warning("GitHub API rate-limited or forbidden: %s", url)
+                logger.warning("GitHub API rate-limited or forbidden: %s", _sanitize_log(url))
                 return None
             resp.raise_for_status()
             return resp.json()
         except (httpx.HTTPError, OSError, ValueError):
-            logger.debug("GitHub API request failed: %s", url)
+            logger.debug("GitHub API request failed: %s", _sanitize_log(url))
             return None
 
 
