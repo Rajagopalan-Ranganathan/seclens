@@ -803,6 +803,137 @@ a.cve-id:hover {
     text-decoration: underline;
 }
 
+/* Dual score badges on product cards */
+.score-badges {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.score-badges .score-badge {
+    min-width: 55px;
+}
+
+.score-label {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 0.15rem;
+}
+
+/* Dual big scores on scorecard */
+.dual-scores {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+}
+
+/* Section headings */
+.section-heading {
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+    color: var(--text);
+}
+
+/* Privacy signals */
+.privacy-signals {
+    margin-top: 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+}
+
+.privacy-signals h3 { margin-bottom: 0.75rem; }
+
+.signals-columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.signal-column { min-width: 0; }
+
+.signal-heading {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 2px solid var(--border);
+}
+
+.signal-heading-good { color: var(--green); border-color: var(--green); }
+.signal-heading-bad { color: var(--red); border-color: var(--red); }
+.signal-heading-neutral { color: var(--text-muted); }
+
+.privacy-signal {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    padding: 0.3rem 0;
+    line-height: 1.4;
+}
+
+.privacy-signal .signal-icon { flex-shrink: 0; width: 1rem; text-align: center; font-weight: 700; }
+.signal-good .signal-icon { color: var(--green); }
+.signal-bad .signal-icon { color: var(--red); }
+.signal-neutral .signal-icon { color: var(--text-muted); }
+
+.signal-more {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    padding: 0.3rem 0;
+}
+
+/* Breach list */
+.breach-list {
+    margin-top: 1.5rem;
+}
+
+.breach-list h3 { margin-bottom: 0.75rem; }
+
+.breach-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--orange);
+    border-radius: var(--radius);
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.breach-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.3rem;
+}
+
+.breach-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.breach-date {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.breach-meta {
+    display: flex;
+    gap: 0.75rem;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    flex-wrap: wrap;
+}
+
+.breach-types {
+    color: var(--orange);
+}
+
 /* Utilities */
 .hidden { display: none !important; }
 

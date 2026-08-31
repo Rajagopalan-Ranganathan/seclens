@@ -1,9 +1,14 @@
 from __future__ import annotations
 
+import logging
+
 from fastapi import APIRouter, HTTPException, Query
+
+logger = logging.getLogger(__name__)
 
 from .dependencies import (
     get_metrics,
+    get_privacy_service,
     get_project_service,
     get_scoring_service,
     get_search_service,
@@ -11,10 +16,14 @@ from .dependencies import (
     get_vuln_repo,
 )
 from .schemas import (
+    BreachResponse,
     DependencyResponse,
     DependencyVulnResponse,
     HealthResponse,
     PatchInfoResponse,
+    PrivacyBreakdownResponse,
+    PrivacyScoreResponse,
+    PrivacySignalResponse,
     ProductResponse,
     ProjectResponse,
     ProjectScoreBreakdownResponse,
@@ -33,11 +42,24 @@ router = APIRouter(prefix="/api/v1")
 @router.get("/search", response_model=SearchResponse)
 async def search(q: str = Query(..., min_length=1, description="Search query")):
     svc = get_search_service()
+    privacy_svc = get_privacy_service()
     products = await svc.search(q)
+
+    results = []
+    for p in products:
+        resp = _product_to_response(p)
+        try:
+            ps = await privacy_svc.score_product(p.cpe.vendor, p.cpe.product)
+            if ps:
+                resp.privacy_score = _privacy_score_to_response(ps)
+        except Exception:  # noqa: BLE001 — privacy is best-effort
+            logger.debug("Privacy scoring unavailable for %s", p.cpe.vendor)
+        results.append(resp)
+
     return SearchResponse(
         query=q,
-        results=[_product_to_response(p) for p in products],
-        total=len(products),
+        results=results,
+        total=len(results),
     )
 
 
@@ -63,6 +85,22 @@ async def product_patches(cpe: str):
     svc = get_scoring_service()
     patched = await svc.get_patches(cpe)
     return [_vuln_to_response(v) for v in patched]
+
+
+@router.get("/products/{cpe:path}/privacy", response_model=PrivacyScoreResponse)
+async def product_privacy(cpe: str):
+    from seclens.domain.models.product import CPE as CPEModel
+
+    try:
+        parsed = CPEModel.from_uri(cpe)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+    svc = get_privacy_service()
+    result = await svc.score_product(parsed.vendor, parsed.product)
+    if not result:
+        raise HTTPException(404, f"Insufficient privacy data for: {cpe}")
+    return _privacy_score_to_response(result)
 
 
 @router.get("/vulns/{cve_id}", response_model=VulnerabilityResponse)
@@ -115,6 +153,7 @@ async def metrics():
 
 def _product_to_response(p) -> ProductResponse:
     score_resp = _score_to_response(p.score) if p.score else None
+    privacy_resp = _privacy_score_to_response(p.privacy_score) if p.privacy_score else None
     return ProductResponse(
         name=p.cpe.display_name,
         cpe_uri=p.cpe.uri,
@@ -122,6 +161,7 @@ def _product_to_response(p) -> ProductResponse:
         version=p.version if p.version != "*" else "",
         vuln_count=len(p.vulnerabilities),
         score=score_resp,
+        privacy_score=privacy_resp,
     )
 
 
@@ -245,4 +285,41 @@ def _project_to_response(p) -> ProjectResponse:
         dependencies=dep_responses,
         total_deps=len(p.dependencies),
         vulnerable_deps=sum(1 for d in p.dependencies if d.is_vulnerable),
+    )
+
+
+def _privacy_score_to_response(ps) -> PrivacyScoreResponse:
+    return PrivacyScoreResponse(
+        overall=ps.overall,
+        grade=ps.grade,
+        computed_at=ps.computed_at,
+        breakdown=PrivacyBreakdownResponse(
+            data_collection=ps.breakdown.data_collection,
+            tracker_exposure=ps.breakdown.tracker_exposure,
+            policy_practices=ps.breakdown.policy_practices,
+            breach_history=ps.breakdown.breach_history,
+            data_sharing=ps.breakdown.data_sharing,
+        ),
+        signals=[
+            PrivacySignalResponse(
+                source=s.source,
+                category=s.category,
+                description=s.description,
+                sentiment=s.sentiment,
+                raw_score=s.raw_score,
+            )
+            for s in ps.signals
+        ],
+        breaches=[
+            BreachResponse(
+                name=b.name,
+                domain=b.domain,
+                breach_date=b.breach_date,
+                record_count=b.record_count,
+                data_types=list(b.data_types),
+                is_verified=b.is_verified,
+            )
+            for b in ps.breaches
+        ],
+        sources_used=list(ps.sources_used),
     )

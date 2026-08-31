@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
+from .privacy import PrivacyScore, ServiceInfo
 from .score import SecurityScore
 from .vulnerability import Vulnerability
 
@@ -227,6 +228,52 @@ PRODUCT_DISPLAY: dict[str, str] = {
 }
 
 
+# Maps (vendor, product) from CPE space to service identity for privacy lookups.
+# tosdr_id values sourced from https://api.tosdr.org — use None when unknown.
+SERVICE_MAPPINGS: dict[tuple[str, str], ServiceInfo] = {
+    ("google", "chrome"): ServiceInfo("Google Chrome", "google.com", tosdr_id=217),
+    ("google", "android"): ServiceInfo("Android / Google", "google.com", tosdr_id=217),
+    ("google", "chrome_os"): ServiceInfo("Google Chrome OS", "google.com", tosdr_id=217),
+    ("apple", "macos"): ServiceInfo("Apple macOS", "apple.com", tosdr_id=158),
+    ("apple", "iphone_os"): ServiceInfo("Apple iOS", "apple.com", tosdr_id=158),
+    ("apple", "ipados"): ServiceInfo("Apple iPadOS", "apple.com", tosdr_id=158),
+    ("apple", "watchos"): ServiceInfo("Apple watchOS", "apple.com", tosdr_id=158),
+    ("apple", "tvos"): ServiceInfo("Apple tvOS", "apple.com", tosdr_id=158),
+    ("apple", "visionos"): ServiceInfo("Apple visionOS", "apple.com", tosdr_id=158),
+    ("microsoft", "windows_10"): ServiceInfo("Microsoft Windows", "microsoft.com", tosdr_id=244),
+    ("microsoft", "windows_11"): ServiceInfo("Microsoft Windows", "microsoft.com", tosdr_id=244),
+    ("microsoft", "windows_server"): ServiceInfo(
+        "Microsoft Windows Server", "microsoft.com", tosdr_id=244
+    ),
+    ("mozilla", "firefox"): ServiceInfo("Mozilla Firefox", "mozilla.org", tosdr_id=175),
+    ("docker", "docker"): ServiceInfo("Docker", "docker.com"),
+    ("oracle", "mysql"): ServiceInfo("Oracle MySQL", "oracle.com"),
+    ("oracle", "jdk"): ServiceInfo("Oracle JDK", "oracle.com"),
+    ("postgresql", "postgresql"): ServiceInfo("PostgreSQL", "postgresql.org"),
+    ("nodejs", "node.js"): ServiceInfo("Node.js", "nodejs.org"),
+    ("redhat", "enterprise_linux"): ServiceInfo("Red Hat Enterprise Linux", "redhat.com"),
+    ("canonical", "ubuntu_linux"): ServiceInfo("Ubuntu", "ubuntu.com"),
+    ("debian", "debian_linux"): ServiceInfo("Debian", "debian.org"),
+    ("fedoraproject", "fedora"): ServiceInfo("Fedora", "fedoraproject.org"),
+    ("centos", "centos"): ServiceInfo("CentOS", "centos.org"),
+    ("f5", "nginx"): ServiceInfo("NGINX", "nginx.org"),
+    ("apache", "http_server"): ServiceInfo("Apache HTTP Server", "apache.org"),
+    ("apache", "tomcat"): ServiceInfo("Apache Tomcat", "apache.org"),
+    ("openssl", "openssl"): ServiceInfo("OpenSSL", "openssl.org"),
+    ("openbsd", "openssh"): ServiceInfo("OpenSSH", "openssh.com"),
+    ("haxx", "curl"): ServiceInfo("curl", "curl.se"),
+    ("kubernetes", "kubernetes"): ServiceInfo("Kubernetes", "kubernetes.io"),
+    ("linux", "linux_kernel"): ServiceInfo("Linux Kernel", "kernel.org"),
+    ("cisco", "ios"): ServiceInfo("Cisco IOS", "cisco.com"),
+    ("cisco", "ios_xe"): ServiceInfo("Cisco IOS XE", "cisco.com"),
+    ("cisco", "adaptive_security_appliance"): ServiceInfo("Cisco ASA", "cisco.com"),
+    ("fortinet", "fortios"): ServiceInfo("Fortinet FortiOS", "fortinet.com"),
+    ("paloaltonetworks", "pan-os"): ServiceInfo("Palo Alto PAN-OS", "paloaltonetworks.com"),
+    ("synology", "diskstation_manager"): ServiceInfo("Synology DSM", "synology.com"),
+    ("qnap", "qts"): ServiceInfo("QNAP QTS", "qnap.com"),
+}
+
+
 @dataclass(frozen=True)
 class CPE:
     """Common Platform Enumeration identifier (CPE 2.3 format)."""
@@ -293,3 +340,4 @@ class Product:
     version: str
     vulnerabilities: list[Vulnerability] = field(default_factory=list)
     score: SecurityScore | None = None
+    privacy_score: PrivacyScore | None = None

@@ -51,6 +51,8 @@ Search for software products by name, CPE, or keyword.
 }
 ```
 
+**Note**: Search results now include an optional `privacy_score` field alongside the security `score`. The privacy score appears when sufficient privacy data is available for the product.
+
 ### Product Score
 
 #### `GET /api/v1/products/{cpe}/score`
@@ -100,6 +102,49 @@ List all vulnerabilities affecting a product.
 #### `GET /api/v1/products/{cpe}/patches`
 
 List only the patched vulnerabilities (enriched with vendor advisory data for Red Hat products).
+
+### Product Privacy
+
+#### `GET /api/v1/products/{cpe}/privacy`
+
+Get the privacy scorecard for a product by CPE URI. Requires at least 2 of 4 privacy data sources to have data.
+
+**Response** (`PrivacyScoreResponse`):
+
+```json
+{
+  "overall": 62.5,
+  "grade": "D",
+  "computed_at": "2026-08-31T23:00:00Z",
+  "breakdown": {
+    "data_collection": 55.0,
+    "tracker_exposure": 30.0,
+    "policy_practices": 55.0,
+    "breach_history": 76.0,
+    "data_sharing": 80.0
+  },
+  "signals": [
+    {
+      "source": "tosdr",
+      "category": "data_collection",
+      "description": "This service collects your personal data",
+      "sentiment": "bad",
+      "raw_score": null
+    }
+  ],
+  "breaches": [
+    {
+      "name": "ExampleBreach 2023",
+      "domain": "example.com",
+      "breach_date": "2023-06-15",
+      "record_count": 5000000,
+      "data_types": ["Email addresses", "Passwords"],
+      "is_verified": true
+    }
+  ],
+  "sources_used": ["tosdr", "hibp", "disconnect"]
+}
+```
 
 ### GitHub Project Analysis
 

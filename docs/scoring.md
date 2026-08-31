@@ -213,3 +213,70 @@ Supply Chain:     84.2  (all pinned, no direct vulns)
 
 Overall: 89.3 (B+ grade)
 ```
+
+---
+
+## Privacy Scoring (`domain/privacy_scoring.py`)
+
+The privacy score evaluates the privacy posture of a product or service based on its data practices, tracking, and breach history.
+
+### Factor Weights
+
+```
+Overall = Data Collection   × 0.25
+        + Policy Practices   × 0.25
+        + Tracker Exposure   × 0.20
+        + Breach History     × 0.20
+        + Data Sharing       × 0.10
+```
+
+### Data Sources
+
+| Source | What it provides | Coverage |
+|--------|-----------------|----------|
+| ToS;DR | Letter grade (A-E), individual policy points | ~1000 services |
+| Have I Been Pwned | Breach history with record counts and data types | Any domain |
+| Disconnect | Tracker category associations (ads, analytics, fingerprinting) | Major trackers |
+| PrivacySpy | Privacy policy score (0-10), rubric breakdown | ~200 services |
+
+### Individual Factors
+
+#### 1. Data Collection (25% weight)
+
+Combines ToS;DR grade, PrivacySpy score, and collection-related ToS;DR signals. Higher score = less data collected.
+
+#### 2. Policy Practices (25% weight)
+
+Evaluates the quality and user-friendliness of privacy policies. Uses ToS;DR grade, policy-related signals (good/bad/blocker), and PrivacySpy rubric.
+
+#### 3. Tracker Exposure (20% weight)
+
+Penalty-based scoring from the Disconnect tracker list. Category penalties:
+
+| Category | Penalty |
+|----------|---------|
+| Fingerprinting | -30 |
+| Advertising | -25 |
+| Analytics | -15 |
+| Social | -10 |
+| Content | -5 |
+
+No trackers = 90 (not 100, to account for trackers not in the Disconnect list).
+
+#### 4. Breach History (20% weight)
+
+Evaluates data breaches from Have I Been Pwned. Factors: number of verified breaches, total records exposed (log scale), and presence of sensitive data types (passwords, credit cards, SSNs).
+
+No known breaches = 100.
+
+#### 5. Data Sharing (10% weight)
+
+Based on sharing-related ToS;DR signals. Tracks whether data is shared with or sold to third parties. Defaults to 70 when no signals exist.
+
+### Missing Data Handling
+
+Privacy data is sparser than security data. The scoring algorithm requires at least 2 of the 4 sources to produce a score. When a factor has no data, its weight is redistributed proportionally to the active factors.
+
+### Service Mapping
+
+Privacy sources identify services by name/domain, not by CPE. The `SERVICE_MAPPINGS` dictionary in `domain/models/product.py` maps `(vendor, product)` CPE tuples to `ServiceInfo` objects containing the service name, domain, and optional ToS;DR ID. For unmapped products, the system attempts a best-guess mapping using the vendor name as a domain.

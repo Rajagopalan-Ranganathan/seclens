@@ -4,9 +4,10 @@ This file provides context for AI agents (Claude, Cursor, Copilot, etc.) working
 
 ## What is Seclens?
 
-A security-focused search engine that scores the security posture of:
+A security-focused search engine that scores the security and privacy posture of:
 1. **Software products** (via CPE) using NVD, EPSS, CISA KEV, and vendor advisory data
 2. **GitHub projects** (via repository URL) using SBOM/manifests, OSV.dev, and repo security signals
+3. **Privacy scoring** for products using ToS;DR, Have I Been Pwned, Disconnect, and PrivacySpy
 
 ## Quick Start
 
@@ -69,6 +70,21 @@ Follow the Red Hat pattern in `adapters/fetchers/redhat_fetcher.py`:
 3. Add weight in `SecurityScore.create()`
 4. Update frontend `breakdownItem()` calls in `frontend/static/js/app.js`
 5. Update `docs/scoring.md`
+
+### Adding a privacy data source
+
+Follow the ToS;DR/HIBP pattern:
+1. Define abstract port in `ports/privacy_fetchers.py`
+2. Implement adapter in `adapters/fetchers/{source}_fetcher.py`
+3. Wire in `api/dependencies.py` and inject into `PrivacyService`
+4. Add to `PrivacyResult` model if new data fields are needed
+5. Update scoring factors in `domain/privacy_scoring.py` if the source introduces a new factor
+
+### Adding a service mapping
+
+1. Add `(vendor, product): ServiceInfo(name, domain, tosdr_id)` to `SERVICE_MAPPINGS` in `domain/models/product.py`
+2. Use the actual ToS;DR service ID if known (find via `https://api.tosdr.org/search/v4/?query={name}`)
+3. For products without a web service identity, the system falls back to guessing `{vendor}.com`
 
 ### Adding a hardware/device alias
 
@@ -135,6 +151,10 @@ Follow the Red Hat pattern in `adapters/fetchers/redhat_fetcher.py`:
 | DI wiring (all singletons) | `src/seclens/api/dependencies.py` |
 | Product scoring algorithm | `src/seclens/domain/scoring.py` |
 | Project scoring algorithm | `src/seclens/domain/project_scoring.py` |
+| Privacy scoring algorithm | `src/seclens/domain/privacy_scoring.py` |
+| Privacy domain models | `src/seclens/domain/models/privacy.py` |
+| Privacy service orchestrator | `src/seclens/application/privacy_service.py` |
+| Service mappings (CPE→domain) | `src/seclens/domain/models/product.py` (`SERVICE_MAPPINGS`) |
 | Product aliases (RHEL→redhat) | `src/seclens/domain/models/product.py` |
 | Score weights | `src/seclens/domain/models/score.py` (line ~60) |
 | Grade thresholds | `src/seclens/domain/models/score.py` (line ~20) |
@@ -157,6 +177,10 @@ Follow the Red Hat pattern in `adapters/fetchers/redhat_fetcher.py`:
 7. **OSV batch API** accepts max 1000 queries but we batch at 100 for reliability.
 8. **SQLite connections** use `asynccontextmanager` -- don't reuse `aiosqlite` connection objects across tasks.
 9. **The `data/` directory is gitignored** -- the SQLite DB is created on first run/sync.
+10. **Privacy scoring requires ≥2 sources** to produce a score. With only 1 source, it returns None.
+11. **SERVICE_MAPPINGS** maps CPE `(vendor, product)` to service identity for privacy lookups. Without a mapping, the system guesses `{vendor}.com`.
+12. **ToS;DR API** can be slow (~2-5s). Privacy scores are fetched in parallel but may add latency to search results.
+13. **HIBP API key** is optional (`HIBP_API_KEY` env var) but improves rate limits significantly.
 
 ## Docker & Containers
 

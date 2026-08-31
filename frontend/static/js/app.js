@@ -151,13 +151,23 @@ function renderResults(data) {
     for (const product of data.results) {
         const card = document.createElement('div');
         card.className = 'product-card';
-        card.addEventListener('click', () => loadScorecard(product.cpe_uri, product.name));
+        card.addEventListener('click', () => loadScorecard(product.cpe_uri, product.name, product.privacy_score));
 
         const gradeClass = product.score ? getGradeClass(product.score.grade) : '';
+        const privacyGradeClass = product.privacy_score ? getGradeClass(product.privacy_score.grade) : '';
         const scoreHTML = product.score
-            ? `<div class="score-badge">
-                   <span class="score-value ${gradeClass}">${product.score.overall}</span>
-                   <span class="score-grade ${gradeClass}">${product.score.grade}</span>
+            ? `<div class="score-badges">
+                   <div class="score-badge">
+                       <span class="score-value ${gradeClass}">${product.score.overall}</span>
+                       <span class="score-grade ${gradeClass}">${product.score.grade}</span>
+                       <span class="score-label">security</span>
+                   </div>
+                   ${product.privacy_score ? `
+                   <div class="score-badge">
+                       <span class="score-value ${privacyGradeClass}">${product.privacy_score.overall}</span>
+                       <span class="score-grade ${privacyGradeClass}">${product.privacy_score.grade}</span>
+                       <span class="score-label">privacy</span>
+                   </div>` : ''}
                </div>`
             : `<div class="score-badge">
                    <span class="score-value" style="font-size:1rem; color:var(--text-muted)">N/A</span>
@@ -182,38 +192,44 @@ function renderResults(data) {
     hide(scorecardSection);
 }
 
-async function loadScorecard(cpeUri, productName) {
+async function loadScorecard(cpeUri, productName, cachedPrivacy) {
     showLoading();
 
     try {
-        const [scoreResp, vulnsResp] = await Promise.all([
+        const fetches = [
             fetch(`${API}/products/${encodeURIComponent(cpeUri)}/score`),
             fetch(`${API}/products/${encodeURIComponent(cpeUri)}/vulns`),
-        ]);
+        ];
+        if (!cachedPrivacy) {
+            fetches.push(fetch(`${API}/products/${encodeURIComponent(cpeUri)}/privacy`));
+        }
 
+        const responses = await Promise.all(fetches);
         hideLoading();
 
         let score = null;
-        if (scoreResp.ok) {
-            score = await scoreResp.json();
-        }
+        if (responses[0].ok) score = await responses[0].json();
 
         let vulns = [];
-        if (vulnsResp.ok) {
-            vulns = await vulnsResp.json();
+        if (responses[1].ok) vulns = await responses[1].json();
+
+        let privacy = cachedPrivacy || null;
+        if (!cachedPrivacy && responses[2] && responses[2].ok) {
+            privacy = await responses[2].json();
         }
 
-        renderScorecard(productName, cpeUri, score, vulns);
+        renderScorecard(productName, cpeUri, score, vulns, privacy);
     } catch (err) {
         hideLoading();
         showError(`Failed to load scorecard: ${err.message}`);
     }
 }
 
-function renderScorecard(name, cpe, score, vulns) {
+function renderScorecard(name, cpe, score, vulns, privacy) {
     hide(resultsSection);
 
     const gradeClass = score ? getGradeClass(score.grade) : '';
+    const privacyGradeClass = privacy ? getGradeClass(privacy.grade) : '';
 
     let html = `
         <div class="results-header">
@@ -227,6 +243,7 @@ function renderScorecard(name, cpe, score, vulns) {
                     <code class="cpe">${formatCpe(cpe)}</code>
                 </details>
             </div>
+            <div class="dual-scores">
     `;
 
     if (score) {
@@ -234,12 +251,21 @@ function renderScorecard(name, cpe, score, vulns) {
             <div class="big-score">
                 <div class="value ${gradeClass}">${score.overall}</div>
                 <div class="score-grade ${gradeClass}" style="font-size:1.2rem; margin-top:0.3rem;">${score.grade}</div>
-                <div class="label">seclens score</div>
+                <div class="label">security</div>
+            </div>
+        `;
+    }
+    if (privacy) {
+        html += `
+            <div class="big-score">
+                <div class="value ${privacyGradeClass}">${privacy.overall}</div>
+                <div class="score-grade ${privacyGradeClass}" style="font-size:1.2rem; margin-top:0.3rem;">${privacy.grade}</div>
+                <div class="label">privacy</div>
             </div>
         `;
     }
 
-    html += `</div>`;
+    html += `</div></div>`;
 
     if (score) {
         html += `
@@ -249,6 +275,7 @@ function renderScorecard(name, cpe, score, vulns) {
                 ${score.medium_count ? `<span class="severity-chip severity-medium">${score.medium_count} Medium</span>` : ''}
                 ${score.low_count ? `<span class="severity-chip severity-low">${score.low_count} Low</span>` : ''}
             </div>
+            <h3 class="section-heading">Security Breakdown</h3>
             <div class="breakdown-grid">
                 ${breakdownItem('Vuln Density', score.breakdown.vuln_density, 'Fewer CVEs per year of product life = higher')}
                 ${breakdownItem('Avg Severity', score.breakdown.avg_severity, 'Lower mean CVSS across all CVEs = higher')}
@@ -257,8 +284,12 @@ function renderScorecard(name, cpe, score, vulns) {
                 ${breakdownItem('Patch Velocity', score.breakdown.patch_velocity, 'Faster median time to fix = higher')}
                 ${breakdownItem('Unpatched Ratio', score.breakdown.unpatched_ratio, 'Fewer CVEs without a known fix = higher')}
             </div>
-            <p class="score-explainer">Score is 0&ndash;100 (higher = more secure). Weighted: KEV Exposure 20%, Patch Velocity 20%, Unpatched Ratio 20%, Avg Severity 15%, Exploit Likelihood 15%, Vuln Density 10%.</p>
+            <p class="score-explainer">Security score is 0&ndash;100 (higher = more secure). Weighted: KEV Exposure 20%, Patch Velocity 20%, Unpatched Ratio 20%, Avg Severity 15%, Exploit Likelihood 15%, Vuln Density 10%.</p>
         `;
+    }
+
+    if (privacy) {
+        html += renderPrivacySection(privacy);
     }
 
     if (vulns.length > 0) {
@@ -288,6 +319,96 @@ function renderScorecard(name, cpe, score, vulns) {
     if (vulns.length > 0) {
         renderVulnPage();
     }
+}
+
+
+// ---- Privacy Section ----
+
+function renderPrivacySection(privacy) {
+    let html = `<h3 class="section-heading" style="margin-top:2rem;">Privacy Breakdown</h3>
+        <div class="breakdown-grid">
+            ${breakdownItem('Data Collection', privacy.breakdown.data_collection, 'Less personal data collected = higher (25%)')}
+            ${breakdownItem('Tracker Exposure', privacy.breakdown.tracker_exposure, 'Fewer ad/analytics trackers = higher (20%)')}
+            ${breakdownItem('Policy Practices', privacy.breakdown.policy_practices, 'Better privacy policy terms = higher (25%)')}
+            ${breakdownItem('Breach History', privacy.breakdown.breach_history, 'Fewer data breaches = higher (20%)')}
+            ${breakdownItem('Data Sharing', privacy.breakdown.data_sharing, 'Less third-party data sharing = higher (10%)')}
+        </div>
+        <p class="score-explainer">Privacy score is 0&ndash;100 (higher = more private). Sources: ${privacy.sources_used.join(', ')}.</p>
+    `;
+
+    if (privacy.signals && privacy.signals.length > 0) {
+        html += renderPrivacySignals(privacy.signals);
+    }
+
+    if (privacy.breaches && privacy.breaches.length > 0) {
+        html += renderBreachList(privacy.breaches);
+    }
+
+    return html;
+}
+
+function renderPrivacySignals(signals) {
+    const good = signals.filter(s => s.sentiment === 'good');
+    const bad = signals.filter(s => s.sentiment === 'bad' || s.sentiment === 'blocker');
+    const neutral = signals.filter(s => s.sentiment === 'neutral');
+
+    let html = `<div class="privacy-signals">
+        <h3>Privacy Findings</h3>
+        <div class="signals-columns">`;
+
+    if (good.length > 0) {
+        html += `<div class="signal-column">
+            <h4 class="signal-heading signal-heading-good">Positive</h4>
+            ${good.slice(0, 8).map(s => `<div class="privacy-signal signal-good"><span class="signal-icon">&#10003;</span>${escapeHtml(s.description)}</div>`).join('')}
+            ${good.length > 8 ? `<div class="signal-more">+${good.length - 8} more</div>` : ''}
+        </div>`;
+    }
+
+    if (bad.length > 0) {
+        html += `<div class="signal-column">
+            <h4 class="signal-heading signal-heading-bad">Concerns</h4>
+            ${bad.slice(0, 8).map(s => `<div class="privacy-signal signal-bad"><span class="signal-icon">&#10007;</span>${escapeHtml(s.description)}</div>`).join('')}
+            ${bad.length > 8 ? `<div class="signal-more">+${bad.length - 8} more</div>` : ''}
+        </div>`;
+    }
+
+    if (neutral.length > 0 && good.length + bad.length < 6) {
+        html += `<div class="signal-column">
+            <h4 class="signal-heading signal-heading-neutral">Neutral</h4>
+            ${neutral.slice(0, 5).map(s => `<div class="privacy-signal signal-neutral"><span class="signal-icon">&ndash;</span>${escapeHtml(s.description)}</div>`).join('')}
+        </div>`;
+    }
+
+    html += `</div></div>`;
+    return html;
+}
+
+function renderBreachList(breaches) {
+    let html = `<div class="breach-list">
+        <h3>Data Breach History (${breaches.length})</h3>`;
+
+    for (const b of breaches.slice(0, 10)) {
+        const dateStr = b.breach_date || 'Unknown date';
+        const countStr = b.record_count ? b.record_count.toLocaleString() + ' records' : '';
+        const types = (b.data_types || []).slice(0, 5).join(', ');
+        html += `<div class="breach-item">
+            <div class="breach-header">
+                <span class="breach-name">${escapeHtml(b.name)}</span>
+                <span class="breach-date">${dateStr}</span>
+            </div>
+            <div class="breach-meta">
+                ${countStr ? `<span>${countStr}</span>` : ''}
+                ${types ? `<span class="breach-types">${escapeHtml(types)}</span>` : ''}
+                ${!b.is_verified ? '<span class="tag" style="background:var(--surface)">Unverified</span>' : ''}
+            </div>
+        </div>`;
+    }
+    if (breaches.length > 10) {
+        html += `<div style="font-size:0.8rem; color:var(--text-muted); padding:0.5rem;">+${breaches.length - 10} more breaches</div>`;
+    }
+
+    html += `</div>`;
+    return html;
 }
 
 

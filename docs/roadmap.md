@@ -149,15 +149,24 @@ components:
 
 ## 2. Privacy Scorecard
 
-**Status**: Planned
+**Status**: Implemented (MVP)
 
-Score the privacy posture of a product or service, separate from the security score.
+Score the privacy posture of a product or service, separate from the security score. Privacy score appears alongside the security score in search results.
 
-- Data collection practices (from privacy policies, app store metadata)
-- Tracker count (from Exodus Privacy, Disconnect lists)
-- Permission scope (Android/iOS permission analysis)
-- Data breach history
+**Implemented:**
+- ToS;DR integration (privacy policy grade + individual points)
+- Have I Been Pwned integration (breach history)
+- Disconnect tracker list (advertising, analytics, fingerprinting)
+- PrivacySpy dataset (community-scored privacy policies)
+- 5-factor scoring: Data Collection (25%), Policy Practices (25%), Tracker Exposure (20%), Breach History (20%), Data Sharing (10%)
+- Service mapping: 35+ products mapped to service identities
+- Privacy scorecard in frontend (side-by-side with security score, privacy signals, breach list)
+
+**Future enhancements:**
+- Mobile app sources (Exodus Privacy for Android, Apple App Privacy Labels)
 - GDPR/CCPA compliance signals
+- Permission scope analysis for mobile apps
+- More curated service mappings
 
 ---
 

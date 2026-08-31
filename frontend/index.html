@@ -93,6 +93,54 @@
                     </ul>
                 </div>
 
+                <h3 style="margin-top:1.5rem;">Privacy Score</h3>
+                <p>Products also receive a <strong>0&ndash;100 privacy score</strong> computed from four data sources, evaluating how the vendor handles user data:</p>
+                <table class="scoring-table">
+                    <thead>
+                        <tr>
+                            <th>Factor</th>
+                            <th>Weight</th>
+                            <th>What it measures</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Data Collection</td>
+                            <td>25%</td>
+                            <td>How much personal data is collected, per ToS;DR and PrivacySpy analysis</td>
+                        </tr>
+                        <tr>
+                            <td>Policy Practices</td>
+                            <td>25%</td>
+                            <td>Quality of privacy policies (clarity, user rights, data control)</td>
+                        </tr>
+                        <tr>
+                            <td>Tracker Exposure</td>
+                            <td>20%</td>
+                            <td>Known advertising, analytics, and fingerprinting tracker associations</td>
+                        </tr>
+                        <tr>
+                            <td>Breach History</td>
+                            <td>20%</td>
+                            <td>Number and severity of known data breaches (Have I Been Pwned)</td>
+                        </tr>
+                        <tr>
+                            <td>Data Sharing</td>
+                            <td>10%</td>
+                            <td>Whether data is shared with or sold to third parties</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="data-sources" style="margin-top:0.75rem;">
+                    <h4>Privacy Data Sources</h4>
+                    <ul>
+                        <li><a href="https://tosdr.org" target="_blank">ToS;DR</a> &mdash; Terms of Service; Didn't Read: crowdsourced privacy policy ratings</li>
+                        <li><a href="https://haveibeenpwned.com" target="_blank">Have I Been Pwned</a> &mdash; data breach history for service domains</li>
+                        <li><a href="https://disconnect.me" target="_blank">Disconnect</a> &mdash; tracker list categorizing known tracking domains</li>
+                        <li><a href="https://privacyspy.org" target="_blank">PrivacySpy</a> &mdash; community-scored privacy policy evaluations</li>
+                    </ul>
+                </div>
+
                 <h3 style="margin-top:1.5rem;">GitHub Project Score</h3>
                 <p>When you paste a <strong>GitHub repository URL</strong>, seclens analyzes the project's dependencies and repository security posture. The score is computed from three factors:</p>
                 <table class="scoring-table">
@@ -172,7 +220,10 @@
     <footer class="footer">
         <p>Data from <a href="https://nvd.nist.gov" target="_blank">NVD</a>,
         <a href="https://www.first.org/epss/" target="_blank">EPSS</a>,
-        <a href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog" target="_blank">CISA KEV</a></p>
+        <a href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog" target="_blank">CISA KEV</a>,
+        <a href="https://tosdr.org" target="_blank">ToS;DR</a>,
+        <a href="https://haveibeenpwned.com" target="_blank">HIBP</a>,
+        <a href="https://disconnect.me" target="_blank">Disconnect</a></p>
     </footer>
 
     <script src="/static/js/app.js"></script>

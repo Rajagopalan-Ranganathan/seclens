@@ -153,6 +153,48 @@ graph LR
 | `vuln_cpe_map` | Many-to-many CVE ↔ CPE mapping |
 | `sync_metadata` | Last sync timestamp per source |
 
+## Privacy Data Sources
+
+### 8. ToS;DR (Terms of Service; Didn't Read)
+
+| | |
+|---|---|
+| **Adapter** | `adapters/fetchers/tosdr_fetcher.py` → `ToSDRApiFetcher` |
+| **Port** | `ports/privacy_fetchers.py` → `ToSDRFetcher` |
+| **API** | `https://api.tosdr.org/service/v1/` and `https://api.tosdr.org/search/v4/` |
+| **Auth** | None required |
+| **Data** | Letter grade (A-E), policy points with sentiment classification |
+
+### 9. Have I Been Pwned (HIBP)
+
+| | |
+|---|---|
+| **Adapter** | `adapters/fetchers/hibp_fetcher.py` → `HIBPFetcher` |
+| **Port** | `ports/privacy_fetchers.py` → `BreachFetcher` |
+| **API** | `https://haveibeenpwned.com/api/v3/breaches?domain={domain}` |
+| **Auth** | Optional `HIBP_API_KEY` env var (improves rate limits) |
+| **Data** | Breach records with dates, record counts, data types, verification status |
+
+### 10. Disconnect Tracker List
+
+| | |
+|---|---|
+| **Adapter** | `adapters/fetchers/disconnect_fetcher.py` → `DisconnectTrackerRegistry` |
+| **Port** | `ports/privacy_fetchers.py` → `TrackerRegistry` |
+| **Source** | Static JSON from GitHub (loaded once, cached in memory) |
+| **Auth** | None required |
+| **Data** | Domain-to-tracker-category mappings (Advertising, Analytics, Social, Fingerprinting) |
+
+### 11. PrivacySpy
+
+| | |
+|---|---|
+| **Adapter** | `adapters/fetchers/privacyspy_fetcher.py` → `PrivacySpyApiFetcher` |
+| **Port** | `ports/privacy_fetchers.py` → `PrivacySpyFetcher` |
+| **Source** | JSON dataset from GitHub (loaded once, cached in memory) |
+| **Auth** | None required |
+| **Data** | Privacy score (0-10) and rubric breakdown per service |
+
 ## Adding a New Data Source
 
 1. Define a port interface in `ports/` (ABC with abstract methods)

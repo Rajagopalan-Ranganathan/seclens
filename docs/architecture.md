@@ -309,6 +309,7 @@ seclens/
 │   │   │   └── repo_signals.py    # RepoSecuritySignals
 │   │   ├── scoring.py             # Product scoring algorithm
 │   │   ├── project_scoring.py     # Project scoring algorithm
+│   │   ├── privacy_scoring.py     # Privacy scoring algorithm
 │   │   ├── events.py              # Domain events
 │   │   └── exceptions.py          # Custom exceptions
 │   ├── ports/                     # Abstract interfaces
@@ -327,14 +328,19 @@ seclens/
 │   │   │   ├── redhat_fetcher.py  # Red Hat Security Data API
 │   │   │   ├── github_fetcher.py  # GitHub REST API
 │   │   │   ├── osv_fetcher.py     # OSV.dev batch API
-│   │   │   └── manifest_parser.py # Dependency file parsers
+│   │   │   ├── manifest_parser.py # Dependency file parsers
+│   │   │   ├── tosdr_fetcher.py   # ToS;DR privacy ratings
+│   │   │   ├── hibp_fetcher.py    # Have I Been Pwned breach data
+│   │   │   ├── disconnect_fetcher.py # Disconnect tracker list
+│   │   │   └── privacyspy_fetcher.py # PrivacySpy dataset
 │   │   └── events/
 │   │       └── in_memory_bus.py   # Simple pub/sub
 │   ├── application/               # Use case orchestration
 │   │   ├── search_service.py      # Free-text → CPE → vulns → score
 │   │   ├── scoring_service.py     # Score computation + advisory enrichment
 │   │   ├── sync_service.py        # Data pipeline orchestration
-│   │   └── project_service.py     # GitHub project analysis
+│   │   ├── project_service.py     # GitHub project analysis
+│   │   └── privacy_service.py     # Privacy data collection & scoring
 │   ├── api/                       # HTTP layer
 │   │   ├── router.py              # FastAPI routes
 │   │   ├── schemas.py             # Pydantic DTOs

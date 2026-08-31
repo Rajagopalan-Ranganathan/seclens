@@ -51,6 +51,41 @@ class SecurityScoreResponse(BaseModel):
     breakdown: ScoreBreakdownResponse
 
 
+class PrivacySignalResponse(BaseModel):
+    source: str
+    category: str
+    description: str
+    sentiment: str
+    raw_score: float | None = None
+
+
+class BreachResponse(BaseModel):
+    name: str
+    domain: str
+    breach_date: date | None = None
+    record_count: int = 0
+    data_types: list[str] = []
+    is_verified: bool = True
+
+
+class PrivacyBreakdownResponse(BaseModel):
+    data_collection: float
+    tracker_exposure: float
+    policy_practices: float
+    breach_history: float
+    data_sharing: float
+
+
+class PrivacyScoreResponse(BaseModel):
+    overall: float
+    grade: str
+    computed_at: datetime
+    breakdown: PrivacyBreakdownResponse
+    signals: list[PrivacySignalResponse] = []
+    breaches: list[BreachResponse] = []
+    sources_used: list[str] = []
+
+
 class ProductResponse(BaseModel):
     name: str
     cpe_uri: str
@@ -58,6 +93,7 @@ class ProductResponse(BaseModel):
     version: str
     vuln_count: int = 0
     score: SecurityScoreResponse | None = None
+    privacy_score: PrivacyScoreResponse | None = None
 
 
 class SearchResponse(BaseModel):

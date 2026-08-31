@@ -5,16 +5,21 @@ from __future__ import annotations
 from pathlib import Path
 
 from seclens.adapters.events.in_memory_bus import InMemoryEventBus
+from seclens.adapters.fetchers.disconnect_fetcher import DisconnectTrackerRegistry
 from seclens.adapters.fetchers.epss_fetcher import EPSSDataFetcher
 from seclens.adapters.fetchers.github_fetcher import GitHubApiFetcher
+from seclens.adapters.fetchers.hibp_fetcher import HIBPFetcher
 from seclens.adapters.fetchers.kev_fetcher import CISAKEVFetcher
 from seclens.adapters.fetchers.nvd_fetcher import NVDFetcher
 from seclens.adapters.fetchers.osv_fetcher import OSVApiFetcher
+from seclens.adapters.fetchers.privacyspy_fetcher import PrivacySpyApiFetcher
 from seclens.adapters.fetchers.redhat_fetcher import RedHatAdvisoryFetcher
+from seclens.adapters.fetchers.tosdr_fetcher import ToSDRApiFetcher
 from seclens.adapters.persistence.sqlite_repository import (
     SQLiteProductRepository,
     SQLiteVulnRepository,
 )
+from seclens.application.privacy_service import PrivacyService
 from seclens.application.project_service import ProjectService
 from seclens.application.scoring_service import ScoringService
 from seclens.application.search_service import SearchService
@@ -37,6 +42,10 @@ _kev_fetcher = CISAKEVFetcher()
 _redhat_fetcher = RedHatAdvisoryFetcher()
 _github_fetcher = GitHubApiFetcher()
 _osv_fetcher = OSVApiFetcher()
+_tosdr_fetcher = ToSDRApiFetcher()
+_hibp_fetcher = HIBPFetcher()
+_disconnect_registry = DisconnectTrackerRegistry()
+_privacyspy_fetcher = PrivacySpyApiFetcher()
 
 # Wire probes to event bus
 _search_probe = SearchProbe(_event_bus, _metrics)
@@ -74,6 +83,15 @@ def get_metrics() -> MetricsCollector:
 
 def get_project_service() -> ProjectService:
     return ProjectService(_github_fetcher, _osv_fetcher)
+
+
+def get_privacy_service() -> PrivacyService:
+    return PrivacyService(
+        tosdr=_tosdr_fetcher,
+        hibp=_hibp_fetcher,
+        trackers=_disconnect_registry,
+        privacyspy=_privacyspy_fetcher,
+    )
 
 
 async def initialize_db() -> None:

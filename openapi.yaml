@@ -109,6 +109,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/products/{cpe}/privacy:
+    get:
+      summary: Product Privacy
+      operationId: product_privacy_api_v1_products__cpe__privacy_get
+      parameters:
+      - name: cpe
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Cpe
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivacyScoreResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/vulns/{cve_id}:
     get:
       summary: Vulnerability Detail
@@ -215,6 +239,39 @@ paths:
               schema: {}
 components:
   schemas:
+    BreachResponse:
+      properties:
+        name:
+          type: string
+          title: Name
+        domain:
+          type: string
+          title: Domain
+        breach_date:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Breach Date
+        record_count:
+          type: integer
+          title: Record Count
+          default: 0
+        data_types:
+          items:
+            type: string
+          type: array
+          title: Data Types
+          default: []
+        is_verified:
+          type: boolean
+          title: Is Verified
+          default: true
+      type: object
+      required:
+      - name
+      - domain
+      title: BreachResponse
     DependencyResponse:
       properties:
         name:
@@ -355,6 +412,96 @@ components:
           default: nvd
       type: object
       title: PatchInfoResponse
+    PrivacyBreakdownResponse:
+      properties:
+        data_collection:
+          type: number
+          title: Data Collection
+        tracker_exposure:
+          type: number
+          title: Tracker Exposure
+        policy_practices:
+          type: number
+          title: Policy Practices
+        breach_history:
+          type: number
+          title: Breach History
+        data_sharing:
+          type: number
+          title: Data Sharing
+      type: object
+      required:
+      - data_collection
+      - tracker_exposure
+      - policy_practices
+      - breach_history
+      - data_sharing
+      title: PrivacyBreakdownResponse
+    PrivacyScoreResponse:
+      properties:
+        overall:
+          type: number
+          title: Overall
+        grade:
+          type: string
+          title: Grade
+        computed_at:
+          type: string
+          format: date-time
+          title: Computed At
+        breakdown:
+          $ref: '#/components/schemas/PrivacyBreakdownResponse'
+        signals:
+          items:
+            $ref: '#/components/schemas/PrivacySignalResponse'
+          type: array
+          title: Signals
+          default: []
+        breaches:
+          items:
+            $ref: '#/components/schemas/BreachResponse'
+          type: array
+          title: Breaches
+          default: []
+        sources_used:
+          items:
+            type: string
+          type: array
+          title: Sources Used
+          default: []
+      type: object
+      required:
+      - overall
+      - grade
+      - computed_at
+      - breakdown
+      title: PrivacyScoreResponse
+    PrivacySignalResponse:
+      properties:
+        source:
+          type: string
+          title: Source
+        category:
+          type: string
+          title: Category
+        description:
+          type: string
+          title: Description
+        sentiment:
+          type: string
+          title: Sentiment
+        raw_score:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Raw Score
+      type: object
+      required:
+      - source
+      - category
+      - description
+      - sentiment
+      title: PrivacySignalResponse
     ProductResponse:
       properties:
         name:
@@ -376,6 +523,10 @@ components:
         score:
           anyOf:
           - $ref: '#/components/schemas/SecurityScoreResponse'
+          - type: 'null'
+        privacy_score:
+          anyOf:
+          - $ref: '#/components/schemas/PrivacyScoreResponse'
           - type: 'null'
       type: object
       required:
