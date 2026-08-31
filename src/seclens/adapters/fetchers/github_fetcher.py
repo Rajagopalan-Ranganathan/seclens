@@ -56,7 +56,9 @@ class GitHubApiFetcher(GitHubFetcherPort):
                 resp.raise_for_status()
                 data = resp.json()
         except (httpx.HTTPError, OSError, ValueError):
-            logger.warning("Failed to fetch SBOM for %s/%s", _sanitize_log(owner), _sanitize_log(repo))
+            logger.warning(
+                "Failed to fetch SBOM for %s/%s", _sanitize_log(owner), _sanitize_log(repo)
+            )
             return []
 
         return self._parse_spdx(data)
