@@ -13,6 +13,7 @@ Security-focused search engine for scoring software products and GitHub projects
 | [Data Sources & Adapters](adapters.md) | NVD, EPSS, KEV, Red Hat, GitHub, OSV -- APIs, auth, rate limits |
 | [API Reference](api-reference.md) | All REST endpoints with request/response examples |
 | [Frontend](frontend.md) | UI architecture, component overview, how to extend or replace |
+| [Roadmap](roadmap.md) | Future features: hardware device scoring, privacy scorecard, vendor expansion |
 
 ## Security & Operations
 

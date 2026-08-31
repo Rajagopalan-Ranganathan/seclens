@@ -467,5 +467,6 @@ See also:
 - [Scoring Algorithm](scoring.md)
 - [Data Sources & Adapters](adapters.md)
 - [API Reference](api-reference.md)
+- [Roadmap](roadmap.md)
 - [Frontend](frontend.md)
 - [AGENTS.md](../AGENTS.md) (AI agent context)
