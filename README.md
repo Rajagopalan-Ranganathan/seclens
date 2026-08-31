@@ -15,6 +15,9 @@ make dev
 # Sync vulnerability data (NVD, EPSS, CISA KEV)
 make sync
 
+# (Optional) Set a GitHub token for GitHub project scoring (5,000 req/hr)
+export GITHUB_TOKEN=ghp_your_token_here
+
 # Start the server
 make serve
 
