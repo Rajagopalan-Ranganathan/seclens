@@ -351,32 +351,34 @@ function renderPrivacySignals(signals) {
     const good = signals.filter(s => s.sentiment === 'good');
     const bad = signals.filter(s => s.sentiment === 'bad' || s.sentiment === 'blocker');
     const neutral = signals.filter(s => s.sentiment === 'neutral');
+    const INITIAL_LIMIT = 8;
+
+    function renderColumn(items, label, cssClass, icon) {
+        if (items.length === 0) return '';
+        const visible = items.slice(0, INITIAL_LIMIT);
+        const hidden = items.slice(INITIAL_LIMIT);
+        const uid = `signals-${cssClass}-${Date.now()}`;
+        let col = `<div class="signal-column">
+            <h4 class="signal-heading signal-heading-${cssClass}">${label} (${items.length})</h4>
+            ${visible.map(s => `<div class="privacy-signal signal-${cssClass}"><span class="signal-icon">${icon}</span>${escapeHtml(s.description)}</div>`).join('')}`;
+        if (hidden.length > 0) {
+            col += `<div id="${uid}" class="signal-hidden" style="display:none">
+                ${hidden.map(s => `<div class="privacy-signal signal-${cssClass}"><span class="signal-icon">${icon}</span>${escapeHtml(s.description)}</div>`).join('')}
+            </div>
+            <button class="signal-toggle" onclick="const el=document.getElementById('${uid}');const show=el.style.display==='none';el.style.display=show?'block':'none';this.textContent=show?'Show less':'+ ${hidden.length} more'">+ ${hidden.length} more</button>`;
+        }
+        col += `</div>`;
+        return col;
+    }
 
     let html = `<div class="privacy-signals">
         <h3>Privacy Findings</h3>
         <div class="signals-columns">`;
 
-    if (good.length > 0) {
-        html += `<div class="signal-column">
-            <h4 class="signal-heading signal-heading-good">Positive</h4>
-            ${good.slice(0, 8).map(s => `<div class="privacy-signal signal-good"><span class="signal-icon">&#10003;</span>${escapeHtml(s.description)}</div>`).join('')}
-            ${good.length > 8 ? `<div class="signal-more">+${good.length - 8} more</div>` : ''}
-        </div>`;
-    }
-
-    if (bad.length > 0) {
-        html += `<div class="signal-column">
-            <h4 class="signal-heading signal-heading-bad">Concerns</h4>
-            ${bad.slice(0, 8).map(s => `<div class="privacy-signal signal-bad"><span class="signal-icon">&#10007;</span>${escapeHtml(s.description)}</div>`).join('')}
-            ${bad.length > 8 ? `<div class="signal-more">+${bad.length - 8} more</div>` : ''}
-        </div>`;
-    }
-
-    if (neutral.length > 0 && good.length + bad.length < 6) {
-        html += `<div class="signal-column">
-            <h4 class="signal-heading signal-heading-neutral">Neutral</h4>
-            ${neutral.slice(0, 5).map(s => `<div class="privacy-signal signal-neutral"><span class="signal-icon">&ndash;</span>${escapeHtml(s.description)}</div>`).join('')}
-        </div>`;
+    html += renderColumn(good, 'Positive', 'good', '&#10003;');
+    html += renderColumn(bad, 'Concerns', 'bad', '&#10007;');
+    if (neutral.length > 0) {
+        html += renderColumn(neutral, 'Neutral', 'neutral', '&ndash;');
     }
 
     html += `</div></div>`;

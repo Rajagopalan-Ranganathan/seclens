@@ -1,4 +1,4 @@
-"""PrivacySpy dataset adapter — loads privacy scores from the PrivacySpy GitHub repo."""
+"""PrivacySpy dataset adapter — loads privacy scores from the PrivacySpy hosted API."""
 
 from __future__ import annotations
 
@@ -11,9 +11,13 @@ from seclens.ports.privacy_fetchers import PrivacySpyFetcher as PrivacySpyFetche
 
 logger = logging.getLogger(__name__)
 
-PRIVACYSPY_INDEX_URL = (
-    "https://raw.githubusercontent.com/Politiwatch/privacyspy/master/src/data/products.json"
-)
+PRIVACYSPY_API_URL = "https://privacyspy.org/api/v2/products.json"
+
+_CATEGORY_MAP = {
+    "collection": "data_collection",
+    "handling": "sharing",
+    "transparency": "policy",
+}
 
 
 class PrivacySpyApiFetcher(PrivacySpyFetcherPort):
@@ -28,8 +32,8 @@ class PrivacySpyApiFetcher(PrivacySpyFetcherPort):
         if self._loaded:
             return
         try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                resp = await client.get(PRIVACYSPY_INDEX_URL)
+            async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
+                resp = await client.get(PRIVACYSPY_API_URL)
                 resp.raise_for_status()
                 data = resp.json()
         except (httpx.HTTPError, OSError, ValueError) as exc:
@@ -42,14 +46,15 @@ class PrivacySpyApiFetcher(PrivacySpyFetcherPort):
                 continue
             slug = product.get("slug", "").lower()
             name = product.get("name", "").lower()
-            hostname = product.get("hostnames", [""])[0] if product.get("hostnames") else ""
+            hostnames = product.get("hostnames", [])
 
             if slug:
                 self._products[slug] = product
             if name:
                 self._products[name] = product
-            if hostname:
-                self._domain_index[hostname.lower()] = slug or name
+            for hostname in hostnames:
+                if hostname:
+                    self._domain_index[hostname.lower()] = slug or name
 
         self._loaded = True
         logger.info("Loaded PrivacySpy dataset: %d products", len(self._products))
@@ -96,45 +101,40 @@ class PrivacySpyApiFetcher(PrivacySpyFetcherPort):
     def _extract_signals(product: dict) -> list[PrivacySignal]:
         signals: list[PrivacySignal] = []
 
-        rubric = product.get("rubric", {})
-        if not isinstance(rubric, dict):
+        rubric = product.get("rubric", [])
+        if not isinstance(rubric, list):
             return signals
 
-        rubric_items = {
-            "behavioralMarketing": ("data_collection", "Uses data for behavioral marketing"),
-            "security": ("policy", "Has adequate security practices"),
-            "thirdPartyCollection": ("sharing", "Collects data from third parties"),
-            "thirdPartySharing": ("sharing", "Shares data with third parties"),
-            "trackingByService": ("data_collection", "Tracks you on their service"),
-            "trackingByThirdParties": ("data_collection", "Allows third-party tracking"),
-            "dataBreaches": ("policy", "History of data breaches"),
-            "dataCollection": ("data_collection", "Amount of personal data collected"),
-            "dataDeletion": ("policy", "Provides data deletion mechanism"),
-            "lawEnforcement": ("policy", "Law enforcement data sharing policy"),
-        }
-
-        for key, (category, description) in rubric_items.items():
-            val = rubric.get(key)
-            if val is None:
+        for entry in rubric:
+            if not isinstance(entry, dict):
+                continue
+            question = entry.get("question", {})
+            option = entry.get("option", {})
+            if not question or not option:
                 continue
 
-            sentiment = "neutral"
-            raw_score = None
+            q_text = question.get("text", "")
+            q_category = question.get("category", "")
+            opt_text = option.get("text", "")
+            opt_percent = option.get("percent", 0)
+
+            category = _CATEGORY_MAP.get(q_category, "policy")
+
             try:
-                raw_score = float(val)
-                if raw_score >= 7:
-                    sentiment = "good"
-                elif raw_score >= 4:
-                    sentiment = "neutral"
-                else:
-                    sentiment = "bad"
+                percent = float(opt_percent)
+                raw_score = percent / 10.0
             except (ValueError, TypeError):
-                if isinstance(val, str):
-                    val_lower = val.lower()
-                    if val_lower in ("yes", "true"):
-                        sentiment = "bad"
-                    elif val_lower in ("no", "false"):
-                        sentiment = "good"
+                raw_score = None
+                percent = 0.0
+
+            if percent >= 70:
+                sentiment = "good"
+            elif percent >= 30:
+                sentiment = "neutral"
+            else:
+                sentiment = "bad"
+
+            description = f"{q_text} → {opt_text}" if opt_text else q_text
 
             signals.append(
                 PrivacySignal(

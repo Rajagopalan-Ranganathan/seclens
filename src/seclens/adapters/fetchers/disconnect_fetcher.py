@@ -11,8 +11,8 @@ from seclens.ports.privacy_fetchers import TrackerRegistry as TrackerRegistryPor
 logger = logging.getLogger(__name__)
 
 DISCONNECT_URL = (
-    "https://raw.githubusercontent.com/nickthedude/nickthedude.github.io"
-    "/refs/heads/master/disconnect/services.json"
+    "https://raw.githubusercontent.com/disconnectme/"
+    "disconnect-tracking-protection/master/services.json"
 )
 
 

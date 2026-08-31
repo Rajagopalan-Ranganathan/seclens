@@ -68,16 +68,37 @@ class PrivacyScore:
         signals: list[PrivacySignal],
         breaches: list[BreachRecord],
         sources_used: list[str],
+        active_factors: set[str] | None = None,
     ) -> PrivacyScore:
         from .score import _score_to_grade
 
-        overall = (
-            breakdown.data_collection * 0.25
-            + breakdown.tracker_exposure * 0.20
-            + breakdown.policy_practices * 0.25
-            + breakdown.breach_history * 0.20
-            + breakdown.data_sharing * 0.10
-        )
+        base_weights = {
+            "data_collection": 0.25,
+            "tracker_exposure": 0.20,
+            "policy_practices": 0.25,
+            "breach_history": 0.20,
+            "data_sharing": 0.10,
+        }
+
+        factor_values = {
+            "data_collection": breakdown.data_collection,
+            "tracker_exposure": breakdown.tracker_exposure,
+            "policy_practices": breakdown.policy_practices,
+            "breach_history": breakdown.breach_history,
+            "data_sharing": breakdown.data_sharing,
+        }
+
+        if active_factors:
+            active_weight = sum(base_weights[k] for k in active_factors)
+            if active_weight > 0:
+                overall = sum(
+                    factor_values[k] * (base_weights[k] / active_weight) for k in active_factors
+                )
+            else:
+                overall = 0.0
+        else:
+            overall = sum(v * base_weights[k] for k, v in factor_values.items())
+
         overall = round(max(0.0, min(100.0, overall)), 1)
         return cls(
             overall=overall,

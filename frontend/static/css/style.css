@@ -888,6 +888,22 @@ a.cve-id:hover {
     padding: 0.3rem 0;
 }
 
+.signal-toggle {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--accent);
+    cursor: pointer;
+    font-size: 0.8rem;
+    padding: 0.35rem 0.75rem;
+    margin-top: 0.4rem;
+    transition: background 0.15s, color 0.15s;
+}
+.signal-toggle:hover {
+    background: var(--accent);
+    color: #fff;
+}
+
 /* Breach list */
 .breach-list {
     margin-top: 1.5rem;

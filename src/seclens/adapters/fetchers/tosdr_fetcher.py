@@ -11,8 +11,8 @@ from seclens.ports.privacy_fetchers import ToSDRFetcher as ToSDRFetcherPort
 
 logger = logging.getLogger(__name__)
 
-TOSDR_API_V4 = "https://api.tosdr.org/search/v4/"
-TOSDR_SERVICE_V1 = "https://api.tosdr.org/service/v1/"
+TOSDR_SEARCH_URL = "https://api.tosdr.org/search/v4/"
+TOSDR_SERVICE_URL = "https://api.tosdr.org/service/v2/"
 
 _CASE_STATUS_MAP = {
     "approved": True,
@@ -34,17 +34,39 @@ class ToSDRApiFetcher(ToSDRFetcherPort):
     async def fetch_service(
         self, service_name: str, tosdr_id: int | None = None
     ) -> tuple[str | None, list[PrivacySignal]]:
-        if tosdr_id:
-            return await self._fetch_by_id(tosdr_id)
-        return await self._search(service_name)
+        service_id = tosdr_id
+        if not service_id:
+            service_id = await self._search_id(service_name)
+        if not service_id:
+            return None, []
+        return await self._fetch_by_id(service_id)
+
+    async def _search_id(self, service_name: str) -> int | None:
+        """Search ToS;DR for a service and return its ID."""
+        try:
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                resp = await client.get(TOSDR_SEARCH_URL, params={"query": service_name})
+                resp.raise_for_status()
+                data = resp.json()
+        except (httpx.HTTPError, OSError, ValueError) as exc:
+            logger.warning("ToS;DR search failed for %r: %s", service_name, exc)
+            return None
+
+        services = data.get("parameters", {}).get("services", [])
+        if not services:
+            return None
+        raw_id = services[0].get("id")
+        if raw_id is None:
+            return None
+        try:
+            return int(raw_id)
+        except (ValueError, TypeError):
+            return None
 
     async def _fetch_by_id(self, service_id: int) -> tuple[str | None, list[PrivacySignal]]:
         try:
             async with httpx.AsyncClient(timeout=15.0) as client:
-                resp = await client.get(
-                    TOSDR_SERVICE_V1,
-                    params={"id": service_id},
-                )
+                resp = await client.get(TOSDR_SERVICE_URL, params={"id": service_id})
                 resp.raise_for_status()
                 data = resp.json()
         except (httpx.HTTPError, OSError, ValueError) as exc:
@@ -53,39 +75,16 @@ class ToSDRApiFetcher(ToSDRFetcherPort):
 
         return self._parse_service(data)
 
-    async def _search(self, service_name: str) -> tuple[str | None, list[PrivacySignal]]:
-        try:
-            async with httpx.AsyncClient(timeout=15.0) as client:
-                resp = await client.get(
-                    TOSDR_API_V4,
-                    params={"query": service_name},
-                )
-                resp.raise_for_status()
-                data = resp.json()
-        except (httpx.HTTPError, OSError, ValueError) as exc:
-            logger.warning("ToS;DR search failed for %r: %s", service_name, exc)
-            return None, []
-
-        parameters = data.get("parameters", {})
-        services = parameters.get("services", [])
-        if not services:
-            return None, []
-
-        best = services[0]
-        service_id = best.get("id")
-        if not service_id:
-            return None, []
-
-        return await self._fetch_by_id(service_id)
-
     @staticmethod
     def _parse_service(data: dict) -> tuple[str | None, list[PrivacySignal]]:
         parameters = data.get("parameters", {})
-        grade = (
-            parameters.get("rating", {}).get("letter")
-            if isinstance(parameters.get("rating"), dict)
-            else None
-        )
+        rating = parameters.get("rating")
+        if isinstance(rating, dict):
+            grade = rating.get("letter")
+        elif isinstance(rating, str) and len(rating) == 1:
+            grade = rating.upper()
+        else:
+            grade = None
 
         signals: list[PrivacySignal] = []
         for point in parameters.get("points", []):

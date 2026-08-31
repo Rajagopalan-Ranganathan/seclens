@@ -59,10 +59,6 @@ def compute_privacy_score(result: PrivacyResult) -> PrivacyScore | None:
     if active_weight == 0:
         return None
 
-    for k in weights:
-        if k not in factors:
-            factors[k] = 0.0
-
     breakdown = PrivacyBreakdown(
         data_collection=round(factors.get("data_collection", 0.0), 1),
         tracker_exposure=round(factors.get("tracker_exposure", 0.0), 1),
@@ -76,6 +72,7 @@ def compute_privacy_score(result: PrivacyResult) -> PrivacyScore | None:
         signals=all_signals,
         breaches=result.breaches,
         sources_used=result.sources_used,
+        active_factors=set(factors.keys()),
     )
 
 
