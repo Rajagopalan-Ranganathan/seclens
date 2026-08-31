@@ -499,8 +499,15 @@ function renderProjectScorecard(project) {
 
     if (signals) {
         html += `<div class="repo-signals">
-            <h3>Repository Security Signals</h3>
-            <div class="signals-grid">
+            <h3>Repository Security Signals</h3>`;
+
+        if (allSignalsUnknown(signals)) {
+            html += `<div class="signals-unavailable">
+                <p>Unable to fetch repository signals — GitHub API rate limit reached.</p>
+                <p>Set <code>GITHUB_TOKEN</code> env var for full results (5,000 req/hr).</p>
+            </div>`;
+        } else {
+            html += `<div class="signals-grid">
                 ${signalItem('Branch Protection', signals.default_branch_protected)}
                 ${signalItem('Secret Scanning', signals.secret_scanning_enabled)}
                 ${signalItem('Code Scanning', signals.code_scanning_enabled)}
@@ -513,8 +520,10 @@ function renderProjectScorecard(project) {
                 ${signals.last_push_date ? `<span>Last push: ${signals.last_push_date}</span>` : ''}
                 ${signals.archived ? '<span class="tag tag-kev">Archived</span>' : ''}
                 ${signals.fork ? '<span class="tag" style="background:var(--surface)">Fork</span>' : ''}
-            </div>
-        </div>`;
+            </div>`;
+        }
+
+        html += `</div>`;
     }
 
     if (project.dependencies.length > 0) {
@@ -550,13 +559,22 @@ function signalItem(label, value, detail) {
     let icon, cls;
     if (value === true) { icon = '&#10003;'; cls = 'signal-ok'; }
     else if (value === false) { icon = '&#10007;'; cls = 'signal-fail'; }
-    else { icon = '?'; cls = 'signal-unknown'; }
+    else { icon = '&mdash;'; cls = 'signal-unknown'; }
 
     return `<div class="signal-item ${cls}">
         <span class="signal-icon">${icon}</span>
         <span class="signal-label">${label}</span>
         ${detail ? `<span class="signal-detail">${escapeHtml(detail)}</span>` : ''}
     </div>`;
+}
+
+function allSignalsUnknown(signals) {
+    return signals.default_branch_protected === null
+        && signals.secret_scanning_enabled === null
+        && signals.code_scanning_enabled === null
+        && signals.dependency_updates_enabled === null
+        && signals.license_name === null
+        && signals.last_push_date === null;
 }
 
 function getFilteredDeps() {

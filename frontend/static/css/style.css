@@ -696,6 +696,22 @@ a.cve-id:hover {
     margin-bottom: 0.75rem;
 }
 
+.signals-unavailable {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+.signals-unavailable code {
+    background: var(--border);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.85em;
+}
+
 .signals-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
