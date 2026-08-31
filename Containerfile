@@ -29,9 +29,10 @@ ENV PATH="/opt/venv/bin:$PATH" \
 
 WORKDIR /opt/app
 
-RUN mkdir -p /opt/app/data && chown ${CONTAINER_DEFAULT_USER}:0 /opt/app/data
+ARG APP_USER=1001
+RUN mkdir -p /opt/app/data && chown ${APP_USER}:0 /opt/app/data
 
-USER ${CONTAINER_DEFAULT_USER}
+USER ${APP_USER}
 
 EXPOSE 8000
 
