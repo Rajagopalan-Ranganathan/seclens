@@ -41,7 +41,9 @@ class ProjectService:
         if deps:
             deps = await self._osv.query_batch(deps)
             vuln_count = sum(1 for d in deps if d.is_vulnerable)
-            logger.info("OSV query complete: %d/%d deps have vulnerabilities", vuln_count, len(deps))
+            logger.info(
+                "OSV query complete: %d/%d deps have vulnerabilities", vuln_count, len(deps)
+            )
 
         project.dependencies = deps
 

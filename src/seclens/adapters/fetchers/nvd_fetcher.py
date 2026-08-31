@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import datetime as _dt
 import logging
 from datetime import date, timedelta
 
@@ -47,7 +48,7 @@ class NVDFetcher(VulnDataFetcher):
         return await self._fetch_vulns(params)
 
     async def fetch_recent(self, days: int = 7) -> list[Vulnerability]:
-        end = date.today()
+        end = _dt.datetime.now(tz=_dt.UTC).date()
         start = end - timedelta(days=days)
         params = {
             "pubStartDate": f"{start.isoformat()}T00:00:00.000",
@@ -156,5 +157,5 @@ class NVDFetcher(VulnDataFetcher):
     @staticmethod
     def _parse_date(dt_str: str) -> date:
         if not dt_str:
-            return date.today()
+            return _dt.datetime.now(tz=_dt.UTC).date()
         return date.fromisoformat(dt_str[:10])

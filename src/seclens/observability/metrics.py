@@ -6,6 +6,7 @@ import json
 import logging
 import time
 from dataclasses import dataclass, field
+from typing import Self
 
 logger = logging.getLogger("seclens.metrics")
 
@@ -56,7 +57,7 @@ class _Timer:
         self._labels = labels
         self._start = 0.0
 
-    def __enter__(self) -> _Timer:
+    def __enter__(self) -> Self:
         self._start = time.monotonic()
         return self
 

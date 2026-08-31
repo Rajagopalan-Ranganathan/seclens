@@ -8,17 +8,17 @@ from .vulnerability import Vulnerability
 
 _CPE_23_RE = re.compile(
     r"^cpe:2\.3:"
-    r"([aho]):"           # part
-    r"([^:]+):"           # vendor
-    r"([^:]+):"           # product
-    r"([^:]+):"           # version
-    r"([^:]+):"           # update
-    r"([^:]+):"           # edition
-    r"([^:]+):"           # language
-    r"([^:]+):"           # sw_edition
-    r"([^:]+):"           # target_sw
-    r"([^:]+):"           # target_hw
-    r"([^:]+)$"           # other
+    r"([aho]):"  # part
+    r"([^:]+):"  # vendor
+    r"([^:]+):"  # product
+    r"([^:]+):"  # version
+    r"([^:]+):"  # update
+    r"([^:]+):"  # edition
+    r"([^:]+):"  # language
+    r"([^:]+):"  # sw_edition
+    r"([^:]+):"  # target_sw
+    r"([^:]+):"  # target_hw
+    r"([^:]+)$"  # other
 )
 
 PART_LABELS = {"a": "application", "o": "operating_system", "h": "hardware"}

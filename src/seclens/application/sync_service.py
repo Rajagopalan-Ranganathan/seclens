@@ -71,7 +71,9 @@ class SyncService:
 
                 logger.info(
                     "NVD batch saved: %d vulns, %d CPEs (total available: %d)",
-                    saved, len(cpe_entries), total_available,
+                    saved,
+                    len(cpe_entries),
+                    total_available,
                 )
 
                 if start_index >= total_available:
@@ -82,12 +84,14 @@ class SyncService:
             logger.exception("NVD sync error")
 
         elapsed_ms = (time.monotonic() - start) * 1000
-        self._events.publish(DataSyncCompleted(
-            source="nvd",
-            records_synced=total_saved,
-            duration_ms=elapsed_ms,
-            errors=errors,
-        ))
+        self._events.publish(
+            DataSyncCompleted(
+                source="nvd",
+                records_synced=total_saved,
+                duration_ms=elapsed_ms,
+                errors=errors,
+            )
+        )
         return total_saved
 
     async def sync_epss(self) -> int:
@@ -107,12 +111,14 @@ class SyncService:
             logger.exception("EPSS sync error")
 
         elapsed_ms = (time.monotonic() - start) * 1000
-        self._events.publish(DataSyncCompleted(
-            source="epss",
-            records_synced=updated,
-            duration_ms=elapsed_ms,
-            errors=errors,
-        ))
+        self._events.publish(
+            DataSyncCompleted(
+                source="epss",
+                records_synced=updated,
+                duration_ms=elapsed_ms,
+                errors=errors,
+            )
+        )
         return updated
 
     async def sync_kev(self) -> int:
@@ -130,12 +136,14 @@ class SyncService:
             logger.exception("KEV sync error")
 
         elapsed_ms = (time.monotonic() - start) * 1000
-        self._events.publish(DataSyncCompleted(
-            source="kev",
-            records_synced=count,
-            duration_ms=elapsed_ms,
-            errors=errors,
-        ))
+        self._events.publish(
+            DataSyncCompleted(
+                source="kev",
+                records_synced=count,
+                duration_ms=elapsed_ms,
+                errors=errors,
+            )
+        )
         return count
 
     async def sync_redhat_advisories(self, batch_size: int = 50) -> int:
@@ -160,7 +168,9 @@ class SyncService:
 
                 logger.info(
                     "Red Hat advisory batch %d-%d: enriched %d CVEs",
-                    i, i + len(batch), enriched,
+                    i,
+                    i + len(batch),
+                    enriched,
                 )
 
         except Exception as e:
@@ -168,12 +178,14 @@ class SyncService:
             logger.exception("Red Hat advisory sync error")
 
         elapsed_ms = (time.monotonic() - start) * 1000
-        self._events.publish(DataSyncCompleted(
-            source="redhat",
-            records_synced=enriched,
-            duration_ms=elapsed_ms,
-            errors=errors,
-        ))
+        self._events.publish(
+            DataSyncCompleted(
+                source="redhat",
+                records_synced=enriched,
+                duration_ms=elapsed_ms,
+                errors=errors,
+            )
+        )
         return enriched
 
     @staticmethod
@@ -188,12 +200,14 @@ class SyncService:
                 seen.add(cpe_uri)
                 parts = cpe_uri.split(":")
                 if len(parts) >= 6:
-                    entries.append({
-                        "cpe_uri": cpe_uri,
-                        "part": parts[2],
-                        "vendor": parts[3],
-                        "product": parts[4],
-                        "version": parts[5],
-                        "title": f"{parts[3].replace('_', ' ').title()} {parts[4].replace('_', ' ').title()}",
-                    })
+                    entries.append(
+                        {
+                            "cpe_uri": cpe_uri,
+                            "part": parts[2],
+                            "vendor": parts[3],
+                            "product": parts[4],
+                            "version": parts[5],
+                            "title": f"{parts[3].replace('_', ' ').title()} {parts[4].replace('_', ' ').title()}",
+                        }
+                    )
         return entries

@@ -68,6 +68,22 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
 
+  openapi-check:
+    name: OpenAPI Spec Freshness
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -e .
+
+      - name: Verify openapi.yaml is up to date
+        run: python scripts/generate_openapi.py --check
+
   docker-build:
     name: Docker Build
     runs-on: ubuntu-latest

@@ -79,6 +79,7 @@ class HealthResponse(BaseModel):
 
 # --- GitHub Project Scoring ---
 
+
 class DependencyVulnResponse(BaseModel):
     vuln_id: str
     aliases: list[str] = []

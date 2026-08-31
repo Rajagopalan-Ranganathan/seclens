@@ -30,6 +30,8 @@ class InMemoryEventBus(EventBus):
             except Exception:
                 logger.exception("Event handler failed for %s", event_type.__name__)
 
-    def subscribe(self, event_type: type[DomainEvent], handler: Callable[[DomainEvent], Any]) -> None:
+    def subscribe(
+        self, event_type: type[DomainEvent], handler: Callable[[DomainEvent], Any]
+    ) -> None:
         self._handlers[event_type].append(handler)
         logger.debug("Subscribed %s to %s", handler.__name__, event_type.__name__)

@@ -12,7 +12,7 @@ import httpx
 from seclens.domain.models import Dependency, RepoSecuritySignals
 from seclens.ports.github_fetcher import GitHubFetcher as GitHubFetcherPort
 
-from .manifest_parser import PREFERRED_MANIFESTS, detect_ecosystem, parse_manifest
+from .manifest_parser import PREFERRED_MANIFESTS, parse_manifest
 
 logger = logging.getLogger(__name__)
 
@@ -39,11 +39,13 @@ class GitHubApiFetcher(GitHubFetcherPort):
             async with httpx.AsyncClient(timeout=30.0) as client:
                 resp = await client.get(url, headers=self._headers())
                 if resp.status_code == 404:
-                    logger.info("SBOM not available for %s/%s, will use manifest fallback", owner, repo)
+                    logger.info(
+                        "SBOM not available for %s/%s, will use manifest fallback", owner, repo
+                    )
                     return []
                 resp.raise_for_status()
                 data = resp.json()
-        except Exception:
+        except (httpx.HTTPError, OSError, ValueError):
             logger.warning("Failed to fetch SBOM for %s/%s", owner, repo)
             return []
 
@@ -74,13 +76,15 @@ class GitHubApiFetcher(GitHubFetcherPort):
             # SPDX "DESCRIBES" relationships mark root packages
             is_direct = "DESCRIBES" in str(pkg.get("relationshipType", ""))
 
-            deps.append(Dependency(
-                name=name,
-                version=version.removeprefix("v") if version else "",
-                ecosystem=ecosystem,
-                is_direct=is_direct,
-                license=pkg.get("licenseDeclared"),
-            ))
+            deps.append(
+                Dependency(
+                    name=name,
+                    version=version.removeprefix("v") if version else "",
+                    ecosystem=ecosystem,
+                    is_direct=is_direct,
+                    license=pkg.get("licenseDeclared"),
+                )
+            )
         return deps
 
     async def fetch_manifests(self, owner: str, repo: str) -> list[Dependency]:
@@ -91,12 +95,16 @@ class GitHubApiFetcher(GitHubFetcherPort):
                 if content is not None:
                     parsed = parse_manifest(filename, content)
                     if parsed:
-                        logger.info("Parsed %d deps from %s/%s/%s", len(parsed), owner, repo, filename)
+                        logger.info(
+                            "Parsed %d deps from %s/%s/%s", len(parsed), owner, repo, filename
+                        )
                         deps.extend(parsed)
                         break
         return deps
 
-    async def _fetch_file(self, client: httpx.AsyncClient, owner: str, repo: str, path: str) -> str | None:
+    async def _fetch_file(
+        self, client: httpx.AsyncClient, owner: str, repo: str, path: str
+    ) -> str | None:
         url = f"{GH_API}/repos/{owner}/{repo}/contents/{path}"
         try:
             resp = await client.get(url, headers=self._headers())
@@ -107,7 +115,7 @@ class GitHubApiFetcher(GitHubFetcherPort):
             if data.get("encoding") == "base64":
                 return base64.b64decode(data["content"]).decode("utf-8", errors="replace")
             return data.get("content", "")
-        except Exception:
+        except (httpx.HTTPError, OSError, ValueError, KeyError):
             return None
 
     async def fetch_repo_signals(self, owner: str, repo: str) -> RepoSecuritySignals:
@@ -206,7 +214,7 @@ class GitHubApiFetcher(GitHubFetcherPort):
         try:
             resp = await client.head(url, headers=headers)
             return resp.status_code == 200
-        except Exception:
+        except (httpx.HTTPError, OSError):
             return False
 
     @staticmethod
@@ -224,7 +232,7 @@ class GitHubApiFetcher(GitHubFetcherPort):
                 return {}
             resp.raise_for_status()
             return resp.json()
-        except Exception:
+        except (httpx.HTTPError, OSError, ValueError):
             logger.debug("GitHub API request failed: %s", url)
             return None
 

@@ -2,7 +2,14 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Query
 
-from .dependencies import get_metrics, get_project_service, get_scoring_service, get_search_service, get_sync_service, get_vuln_repo
+from .dependencies import (
+    get_metrics,
+    get_project_service,
+    get_scoring_service,
+    get_search_service,
+    get_sync_service,
+    get_vuln_repo,
+)
 from .schemas import (
     DependencyResponse,
     DependencyVulnResponse,
@@ -89,7 +96,7 @@ async def analyze_project(url: str = Query(..., description="GitHub repository U
         project = await svc.analyze(url)
     except ValueError as e:
         raise HTTPException(400, str(e))
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 — surface upstream errors as 502
         raise HTTPException(502, f"Failed to analyze project: {e}")
     return _project_to_response(project)
 
@@ -201,29 +208,31 @@ def _project_to_response(p) -> ProjectResponse:
 
     dep_responses = []
     for d in p.dependencies:
-        dep_responses.append(DependencyResponse(
-            name=d.name,
-            version=d.version,
-            ecosystem=d.ecosystem,
-            is_direct=d.is_direct,
-            license=d.license,
-            is_vulnerable=d.is_vulnerable,
-            vuln_count=len(d.vulnerabilities),
-            critical_count=d.critical_count,
-            high_count=d.high_count,
-            vulnerabilities=[
-                DependencyVulnResponse(
-                    vuln_id=v.vuln_id,
-                    aliases=v.aliases,
-                    summary=v.summary,
-                    severity=v.severity,
-                    cvss_score=v.cvss_score,
-                    fixed_version=v.fixed_version,
-                    url=v.url,
-                )
-                for v in d.vulnerabilities
-            ],
-        ))
+        dep_responses.append(
+            DependencyResponse(
+                name=d.name,
+                version=d.version,
+                ecosystem=d.ecosystem,
+                is_direct=d.is_direct,
+                license=d.license,
+                is_vulnerable=d.is_vulnerable,
+                vuln_count=len(d.vulnerabilities),
+                critical_count=d.critical_count,
+                high_count=d.high_count,
+                vulnerabilities=[
+                    DependencyVulnResponse(
+                        vuln_id=v.vuln_id,
+                        aliases=v.aliases,
+                        summary=v.summary,
+                        severity=v.severity,
+                        cvss_score=v.cvss_score,
+                        fixed_version=v.fixed_version,
+                        url=v.url,
+                    )
+                    for v in d.vulnerabilities
+                ],
+            )
+        )
 
     return ProjectResponse(
         owner=p.owner,

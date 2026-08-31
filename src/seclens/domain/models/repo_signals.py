@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime as _dt
 from dataclasses import dataclass
 from datetime import date
 
@@ -25,5 +26,5 @@ class RepoSecuritySignals:
             return False
         if self.last_push_date is None:
             return False
-        days_since = (date.today() - self.last_push_date).days
+        days_since = (_dt.datetime.now(tz=_dt.UTC).date() - self.last_push_date).days
         return days_since < 365

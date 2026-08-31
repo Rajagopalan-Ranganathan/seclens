@@ -59,7 +59,9 @@ def cli():
 
     sync_parser = sub.add_parser("sync", help="Sync vulnerability data")
     sync_parser.add_argument(
-        "--max-vulns", type=int, default=10000,
+        "--max-vulns",
+        type=int,
+        default=10000,
         help="Maximum vulnerabilities to sync from NVD",
     )
     sync_parser.add_argument("--source", choices=["all", "nvd", "epss", "kev"], default="all")

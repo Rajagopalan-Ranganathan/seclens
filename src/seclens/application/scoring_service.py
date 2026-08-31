@@ -44,13 +44,15 @@ class ScoringService:
         product.score = score
 
         elapsed_ms = (time.monotonic() - start) * 1000
-        self._events.publish(ScoreComputed(
-            product_name=product.name,
-            cpe_uri=cpe_uri,
-            score=score.overall,
-            grade=score.grade,
-            computation_ms=elapsed_ms,
-        ))
+        self._events.publish(
+            ScoreComputed(
+                product_name=product.name,
+                cpe_uri=cpe_uri,
+                score=score.overall,
+                grade=score.grade,
+                computation_ms=elapsed_ms,
+            )
+        )
 
         return product, score
 
@@ -78,7 +80,7 @@ class ScoringService:
 
         try:
             advisory_map = await self._advisory.fetch_patches_batch(cve_ids)
-        except Exception:
+        except Exception:  # noqa: BLE001 — best-effort enrichment
             logger.warning("Failed to fetch Red Hat advisories")
             return vulns
 

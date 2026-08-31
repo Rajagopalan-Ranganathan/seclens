@@ -54,7 +54,12 @@ def get_scoring_service() -> ScoringService:
 
 def get_sync_service() -> SyncService:
     return SyncService(
-        _vuln_repo, _product_repo, _nvd_fetcher, _epss_fetcher, _kev_fetcher, _event_bus,
+        _vuln_repo,
+        _product_repo,
+        _nvd_fetcher,
+        _epss_fetcher,
+        _kev_fetcher,
+        _event_bus,
         advisory_fetcher=_redhat_fetcher,
     )
 

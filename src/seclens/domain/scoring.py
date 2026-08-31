@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime as _dt
 import math
 import statistics
 from datetime import date
@@ -9,7 +10,9 @@ from datetime import date
 from .models import ScoreBreakdown, SecurityScore, Severity, Vulnerability
 
 
-def compute_score(vulnerabilities: list[Vulnerability], product_first_seen: date | None = None) -> SecurityScore:
+def compute_score(
+    vulnerabilities: list[Vulnerability], product_first_seen: date | None = None
+) -> SecurityScore:
     """Compute a composite security score from a list of vulnerabilities.
 
     All sub-scores are 0-100 where higher = more secure.
@@ -88,7 +91,7 @@ def _score_vuln_density(vulns: list[Vulnerability], first_seen: date | None) -> 
     else:
         earliest = first_seen
 
-    years = max((date.today() - earliest).days / 365.25, 1.0)
+    years = max((_dt.datetime.now(tz=_dt.UTC).date() - earliest).days / 365.25, 1.0)
     density = len(vulns) / years
 
     if density <= 0:

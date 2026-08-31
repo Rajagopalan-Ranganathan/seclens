@@ -66,10 +66,10 @@ class TestScoring:
     def test_severity_counts(self):
         vulns = [
             _make_vuln(cve_id="CVE-1", cvss=9.8),  # CRITICAL
-            _make_vuln(cve_id="CVE-2", cvss=8.0),   # HIGH
-            _make_vuln(cve_id="CVE-3", cvss=5.0),   # MEDIUM
-            _make_vuln(cve_id="CVE-4", cvss=2.0),   # LOW
-            _make_vuln(cve_id="CVE-5", cvss=0.0),   # NONE
+            _make_vuln(cve_id="CVE-2", cvss=8.0),  # HIGH
+            _make_vuln(cve_id="CVE-3", cvss=5.0),  # MEDIUM
+            _make_vuln(cve_id="CVE-4", cvss=2.0),  # LOW
+            _make_vuln(cve_id="CVE-5", cvss=0.0),  # NONE
         ]
         score = compute_score(vulns)
         assert score.critical_count == 1

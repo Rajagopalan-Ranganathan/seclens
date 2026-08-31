@@ -1,0 +1,728 @@
+openapi: 3.1.0
+info:
+  title: seclens
+  description: Security search engine — scorecard, vulnerabilities, and patch tracking
+  version: 0.1.0
+paths:
+  /api/v1/search:
+    get:
+      summary: Search
+      operationId: search_api_v1_search_get
+      parameters:
+      - name: q
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          description: Search query
+          title: Q
+        description: Search query
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/products/{cpe}/score:
+    get:
+      summary: Product Score
+      operationId: product_score_api_v1_products__cpe__score_get
+      parameters:
+      - name: cpe
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Cpe
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityScoreResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/products/{cpe}/vulns:
+    get:
+      summary: Product Vulns
+      operationId: product_vulns_api_v1_products__cpe__vulns_get
+      parameters:
+      - name: cpe
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Cpe
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VulnerabilityResponse'
+                title: Response Product Vulns Api V1 Products  Cpe  Vulns Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/products/{cpe}/patches:
+    get:
+      summary: Product Patches
+      operationId: product_patches_api_v1_products__cpe__patches_get
+      parameters:
+      - name: cpe
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Cpe
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VulnerabilityResponse'
+                title: Response Product Patches Api V1 Products  Cpe  Patches Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/vulns/{cve_id}:
+    get:
+      summary: Vulnerability Detail
+      operationId: vulnerability_detail_api_v1_vulns__cve_id__get
+      parameters:
+      - name: cve_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Cve Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VulnerabilityResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/sync:
+    post:
+      summary: Trigger Sync
+      operationId: trigger_sync_api_v1_sync_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncResponse'
+  /api/v1/sync/redhat:
+    post:
+      summary: Trigger Redhat Sync
+      description: Enrich stored Red Hat CVEs with RHSA advisory data.
+      operationId: trigger_redhat_sync_api_v1_sync_redhat_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncResponse'
+  /api/v1/project:
+    get:
+      summary: Analyze Project
+      operationId: analyze_project_api_v1_project_get
+      parameters:
+      - name: url
+        in: query
+        required: true
+        schema:
+          type: string
+          description: GitHub repository URL
+          title: Url
+        description: GitHub repository URL
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/health:
+    get:
+      summary: Health
+      operationId: health_api_v1_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /api/v1/metrics:
+    get:
+      summary: Metrics
+      operationId: metrics_api_v1_metrics_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /:
+    get:
+      summary: Serve Frontend
+      operationId: serve_frontend__get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+components:
+  schemas:
+    DependencyResponse:
+      properties:
+        name:
+          type: string
+          title: Name
+        version:
+          type: string
+          title: Version
+        ecosystem:
+          type: string
+          title: Ecosystem
+        is_direct:
+          type: boolean
+          title: Is Direct
+          default: true
+        license:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: License
+        is_vulnerable:
+          type: boolean
+          title: Is Vulnerable
+          default: false
+        vuln_count:
+          type: integer
+          title: Vuln Count
+          default: 0
+        critical_count:
+          type: integer
+          title: Critical Count
+          default: 0
+        high_count:
+          type: integer
+          title: High Count
+          default: 0
+        vulnerabilities:
+          items:
+            $ref: '#/components/schemas/DependencyVulnResponse'
+          type: array
+          title: Vulnerabilities
+          default: []
+      type: object
+      required:
+      - name
+      - version
+      - ecosystem
+      title: DependencyResponse
+    DependencyVulnResponse:
+      properties:
+        vuln_id:
+          type: string
+          title: Vuln Id
+        aliases:
+          items:
+            type: string
+          type: array
+          title: Aliases
+          default: []
+        summary:
+          type: string
+          title: Summary
+          default: ''
+        severity:
+          type: string
+          title: Severity
+          default: UNKNOWN
+        cvss_score:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Cvss Score
+        fixed_version:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Fixed Version
+        url:
+          type: string
+          title: Url
+          default: ''
+      type: object
+      required:
+      - vuln_id
+      title: DependencyVulnResponse
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    HealthResponse:
+      properties:
+        status:
+          type: string
+          title: Status
+        vuln_count:
+          type: integer
+          title: Vuln Count
+        version:
+          type: string
+          title: Version
+          default: 0.1.0
+      type: object
+      required:
+      - status
+      - vuln_count
+      title: HealthResponse
+    PatchInfoResponse:
+      properties:
+        fixed_version:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Fixed Version
+        advisory_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Advisory Id
+        advisory_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Advisory Url
+        patch_date:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Patch Date
+        source:
+          type: string
+          title: Source
+          default: nvd
+      type: object
+      title: PatchInfoResponse
+    ProductResponse:
+      properties:
+        name:
+          type: string
+          title: Name
+        cpe_uri:
+          type: string
+          title: Cpe Uri
+        vendor:
+          type: string
+          title: Vendor
+        version:
+          type: string
+          title: Version
+        vuln_count:
+          type: integer
+          title: Vuln Count
+          default: 0
+        score:
+          anyOf:
+          - $ref: '#/components/schemas/SecurityScoreResponse'
+          - type: 'null'
+      type: object
+      required:
+      - name
+      - cpe_uri
+      - vendor
+      - version
+      title: ProductResponse
+    ProjectResponse:
+      properties:
+        owner:
+          type: string
+          title: Owner
+        repo:
+          type: string
+          title: Repo
+        full_name:
+          type: string
+          title: Full Name
+        url:
+          type: string
+          title: Url
+        description:
+          type: string
+          title: Description
+          default: ''
+        score:
+          anyOf:
+          - $ref: '#/components/schemas/ProjectScoreResponse'
+          - type: 'null'
+        repo_signals:
+          anyOf:
+          - $ref: '#/components/schemas/RepoSignalsResponse'
+          - type: 'null'
+        dependencies:
+          items:
+            $ref: '#/components/schemas/DependencyResponse'
+          type: array
+          title: Dependencies
+          default: []
+        total_deps:
+          type: integer
+          title: Total Deps
+          default: 0
+        vulnerable_deps:
+          type: integer
+          title: Vulnerable Deps
+          default: 0
+      type: object
+      required:
+      - owner
+      - repo
+      - full_name
+      - url
+      title: ProjectResponse
+    ProjectScoreBreakdownResponse:
+      properties:
+        dependency_risk:
+          type: number
+          title: Dependency Risk
+        repo_posture:
+          type: number
+          title: Repo Posture
+        supply_chain:
+          type: number
+          title: Supply Chain
+      type: object
+      required:
+      - dependency_risk
+      - repo_posture
+      - supply_chain
+      title: ProjectScoreBreakdownResponse
+    ProjectScoreResponse:
+      properties:
+        overall:
+          type: number
+          title: Overall
+        grade:
+          type: string
+          title: Grade
+        computed_at:
+          type: string
+          format: date-time
+          title: Computed At
+        total_deps:
+          type: integer
+          title: Total Deps
+        vulnerable_deps:
+          type: integer
+          title: Vulnerable Deps
+        critical_vulns:
+          type: integer
+          title: Critical Vulns
+        high_vulns:
+          type: integer
+          title: High Vulns
+        breakdown:
+          $ref: '#/components/schemas/ProjectScoreBreakdownResponse'
+      type: object
+      required:
+      - overall
+      - grade
+      - computed_at
+      - total_deps
+      - vulnerable_deps
+      - critical_vulns
+      - high_vulns
+      - breakdown
+      title: ProjectScoreResponse
+    RepoSignalsResponse:
+      properties:
+        default_branch_protected:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Default Branch Protected
+        secret_scanning_enabled:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Secret Scanning Enabled
+        code_scanning_enabled:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Code Scanning Enabled
+        dependency_updates_enabled:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Dependency Updates Enabled
+        license_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: License Name
+        last_push_date:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Last Push Date
+        archived:
+          type: boolean
+          title: Archived
+          default: false
+        fork:
+          type: boolean
+          title: Fork
+          default: false
+        stargazers_count:
+          type: integer
+          title: Stargazers Count
+          default: 0
+        is_actively_maintained:
+          type: boolean
+          title: Is Actively Maintained
+          default: false
+      type: object
+      title: RepoSignalsResponse
+    ScoreBreakdownResponse:
+      properties:
+        vuln_density:
+          type: number
+          title: Vuln Density
+        avg_severity:
+          type: number
+          title: Avg Severity
+        exploit_likelihood:
+          type: number
+          title: Exploit Likelihood
+        kev_exposure:
+          type: number
+          title: Kev Exposure
+        patch_velocity:
+          type: number
+          title: Patch Velocity
+        unpatched_ratio:
+          type: number
+          title: Unpatched Ratio
+      type: object
+      required:
+      - vuln_density
+      - avg_severity
+      - exploit_likelihood
+      - kev_exposure
+      - patch_velocity
+      - unpatched_ratio
+      title: ScoreBreakdownResponse
+    SearchResponse:
+      properties:
+        query:
+          type: string
+          title: Query
+        results:
+          items:
+            $ref: '#/components/schemas/ProductResponse'
+          type: array
+          title: Results
+        total:
+          type: integer
+          title: Total
+      type: object
+      required:
+      - query
+      - results
+      - total
+      title: SearchResponse
+    SecurityScoreResponse:
+      properties:
+        overall:
+          type: number
+          title: Overall
+        grade:
+          type: string
+          title: Grade
+        computed_at:
+          type: string
+          format: date-time
+          title: Computed At
+        total_cves:
+          type: integer
+          title: Total Cves
+        critical_count:
+          type: integer
+          title: Critical Count
+        high_count:
+          type: integer
+          title: High Count
+        medium_count:
+          type: integer
+          title: Medium Count
+        low_count:
+          type: integer
+          title: Low Count
+        none_count:
+          type: integer
+          title: None Count
+        breakdown:
+          $ref: '#/components/schemas/ScoreBreakdownResponse'
+      type: object
+      required:
+      - overall
+      - grade
+      - computed_at
+      - total_cves
+      - critical_count
+      - high_count
+      - medium_count
+      - low_count
+      - none_count
+      - breakdown
+      title: SecurityScoreResponse
+    SyncResponse:
+      properties:
+        status:
+          type: string
+          title: Status
+        counts:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Counts
+      type: object
+      required:
+      - status
+      - counts
+      title: SyncResponse
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    VulnerabilityResponse:
+      properties:
+        cve_id:
+          type: string
+          title: Cve Id
+        description:
+          type: string
+          title: Description
+        cvss_score:
+          type: number
+          title: Cvss Score
+        severity:
+          type: string
+          title: Severity
+        published:
+          type: string
+          format: date
+          title: Published
+        last_modified:
+          type: string
+          format: date
+          title: Last Modified
+        epss_score:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Epss Score
+        in_kev:
+          type: boolean
+          title: In Kev
+          default: false
+        is_patched:
+          type: boolean
+          title: Is Patched
+          default: false
+        patches:
+          items:
+            $ref: '#/components/schemas/PatchInfoResponse'
+          type: array
+          title: Patches
+          default: []
+        references:
+          items:
+            type: string
+          type: array
+          title: References
+          default: []
+      type: object
+      required:
+      - cve_id
+      - description
+      - cvss_score
+      - severity
+      - published
+      - last_modified
+      title: VulnerabilityResponse

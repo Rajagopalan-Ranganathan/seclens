@@ -10,16 +10,27 @@ from seclens.domain.project_scoring import (
 )
 
 
-def _make_dep(name: str, vulns: int = 0, critical: int = 0, has_fix: bool = False, is_direct: bool = True, version: str = "1.0") -> Dependency:
+def _make_dep(
+    name: str,
+    vulns: int = 0,
+    critical: int = 0,
+    has_fix: bool = False,
+    is_direct: bool = True,
+    version: str = "1.0",
+) -> Dependency:
     vuln_list = []
     for i in range(vulns):
         sev = "CRITICAL" if i < critical else "HIGH"
-        vuln_list.append(DependencyVuln(
-            vuln_id=f"GHSA-{name}-{i}",
-            severity=sev,
-            fixed_version="2.0" if has_fix else None,
-        ))
-    return Dependency(name=name, version=version, ecosystem="PyPI", is_direct=is_direct, vulnerabilities=vuln_list)
+        vuln_list.append(
+            DependencyVuln(
+                vuln_id=f"GHSA-{name}-{i}",
+                severity=sev,
+                fixed_version="2.0" if has_fix else None,
+            )
+        )
+    return Dependency(
+        name=name, version=version, ecosystem="PyPI", is_direct=is_direct, vulnerabilities=vuln_list
+    )
 
 
 class TestDependencyRisk:

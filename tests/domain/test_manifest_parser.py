@@ -137,21 +137,21 @@ gem 'puma'
 
 class TestPyprojectToml:
     def test_inline_deps(self):
-        content = '''[project]
+        content = """[project]
 dependencies = ["requests>=2.31", "click"]
-'''
+"""
         deps = parse_pyproject_toml(content)
         assert len(deps) == 2
         assert deps[0].name == "requests"
         assert deps[0].version == "2.31"
 
     def test_multiline_deps(self):
-        content = '''[project]
+        content = """[project]
 dependencies = [
     "httpx>=0.25",
     "pydantic",
 ]
-'''
+"""
         deps = parse_pyproject_toml(content)
         assert len(deps) == 2
         assert deps[0].name == "httpx"

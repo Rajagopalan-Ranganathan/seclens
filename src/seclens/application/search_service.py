@@ -35,22 +35,22 @@ class SearchService:
     async def search(self, query: str, limit: int = 20) -> list[Product]:
         start = time.monotonic()
 
-        part, vendor, product_name, version = self._resolve_query(query)
+        _part, vendor, product_name, version = self._resolve_query(query)
 
         # Try local DB first
         products = await self._products.search_products(query, limit=limit)
 
         # If no local results, try alias-resolved search
         if not products:
-            products = await self._products.search_products(
-                f"{vendor} {product_name}", limit=limit
-            )
+            products = await self._products.search_products(f"{vendor} {product_name}", limit=limit)
 
         # Filter by version if the user specified one
         if products and version != "*":
             version_filtered = [
-                p for p in products
-                if p.version == version or p.version.startswith(version + ".")
+                p
+                for p in products
+                if p.version == version
+                or p.version.startswith(version + ".")
                 or p.version.startswith(version)
             ]
             if version_filtered:
@@ -71,11 +71,13 @@ class SearchService:
             products = await self._live_search(query, limit)
 
         elapsed_ms = (time.monotonic() - start) * 1000
-        self._events.publish(SearchPerformed(
-            query=query,
-            results_count=len(products),
-            duration_ms=elapsed_ms,
-        ))
+        self._events.publish(
+            SearchPerformed(
+                query=query,
+                results_count=len(products),
+                duration_ms=elapsed_ms,
+            )
+        )
 
         return products
 
@@ -97,7 +99,7 @@ class SearchService:
         version = "*"
         for alias in sorted(PRODUCT_ALIASES.keys(), key=len, reverse=True):
             if q == alias or q.startswith(alias + " "):
-                remainder = q[len(alias):].strip()
+                remainder = q[len(alias) :].strip()
                 if remainder:
                     version = remainder.split()[0]
                 part, vendor, product = PRODUCT_ALIASES[alias]
@@ -123,7 +125,14 @@ class SearchService:
         logger.info("No local results for %r, trying live NVD query...", query)
 
         part, vendor, product, version = self._resolve_query(query)
-        logger.info("Resolved query %r -> part=%s vendor=%s product=%s version=%s", query, part, vendor, product, version)
+        logger.info(
+            "Resolved query %r -> part=%s vendor=%s product=%s version=%s",
+            query,
+            part,
+            vendor,
+            product,
+            version,
+        )
         vulns: list = []
 
         # Strategy 1: Exact CPE match (most precise)
@@ -139,7 +148,7 @@ class SearchService:
             try:
                 logger.info("Trying exact CPE: %s", cpe_uri)
                 vulns = await self._fetcher.fetch_by_cpe(cpe_uri)
-            except Exception:
+            except Exception:  # noqa: BLE001 — best-effort live fallback
                 logger.warning("Exact CPE match failed for %s", cpe_uri)
 
         # Strategy 2: Broader CPE match without version
@@ -148,7 +157,7 @@ class SearchService:
             try:
                 logger.info("Trying broad CPE: %s", cpe_uri)
                 vulns = await self._fetcher.fetch_by_cpe(cpe_uri)
-            except Exception:
+            except Exception:  # noqa: BLE001 — best-effort live fallback
                 logger.warning("Broad CPE match failed for %r", query)
 
         # Strategy 3: Keyword search as fallback
@@ -160,7 +169,7 @@ class SearchService:
             try:
                 logger.info("Trying keyword search: %s", keyword)
                 vulns = await self._fetcher.fetch_by_keyword(keyword, limit=500)
-            except Exception:
+            except Exception:  # noqa: BLE001 — best-effort live fallback
                 logger.warning("Keyword search failed for %r", keyword)
 
         if not vulns:
@@ -179,14 +188,16 @@ class SearchService:
                 seen_cpes.add(cpe_str)
                 parts = cpe_str.split(":")
                 if len(parts) >= 6:
-                    cpe_entries.append({
-                        "cpe_uri": cpe_str,
-                        "part": parts[2],
-                        "vendor": parts[3],
-                        "product": parts[4],
-                        "version": parts[5],
-                        "title": "",
-                    })
+                    cpe_entries.append(
+                        {
+                            "cpe_uri": cpe_str,
+                            "part": parts[2],
+                            "vendor": parts[3],
+                            "product": parts[4],
+                            "version": parts[5],
+                            "title": "",
+                        }
+                    )
         if cpe_entries:
             await self._products.save_cpe_dictionary(cpe_entries)
 
@@ -224,19 +235,13 @@ class SearchService:
             products.append(p)
 
         # Filter to products matching the resolved vendor/product
-        relevant = [
-            p for p in products
-            if p.cpe.vendor == vendor or p.cpe.product == product
-        ]
+        relevant = [p for p in products if p.cpe.vendor == vendor or p.cpe.product == product]
         if relevant:
             products = relevant
 
         # Strictly filter by version when the user specified one
         if version != "*":
-            products = [
-                p for p in products
-                if p.version.startswith(version)
-            ]
+            products = [p for p in products if p.version.startswith(version)]
 
         # Sort: specific versions first (not wildcard), then by vuln count
         products.sort(key=lambda p: (p.version == "*", -len(p.vulnerabilities)))
@@ -254,6 +259,6 @@ class SearchService:
                 if vulns:
                     await self._vulns.save_vulnerabilities(vulns)
                     return vulns[0]
-            except Exception:
+            except Exception:  # noqa: BLE001 — best-effort live fallback
                 logger.warning("Live CVE lookup failed for %s", cve_id)
         return None

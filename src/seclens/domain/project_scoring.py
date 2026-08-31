@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import date
-
 from .models.dependency import Dependency
 from .models.project import ProjectScore, ProjectScoreBreakdown
 from .models.repo_signals import RepoSecuritySignals

@@ -22,6 +22,7 @@ async def _connection(db_path: Path):
     finally:
         await db.close()
 
+
 _SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS vulnerabilities (
     cve_id TEXT PRIMARY KEY,
@@ -84,16 +85,18 @@ CREATE TABLE IF NOT EXISTS sync_metadata (
 
 
 def _vuln_to_row(v: Vulnerability) -> tuple:
-    patches_json = json.dumps([
-        {
-            "fixed_version": p.fixed_version,
-            "advisory_id": p.advisory_id,
-            "advisory_url": p.advisory_url,
-            "patch_date": p.patch_date.isoformat() if p.patch_date else None,
-            "source": p.source,
-        }
-        for p in v.patches
-    ])
+    patches_json = json.dumps(
+        [
+            {
+                "fixed_version": p.fixed_version,
+                "advisory_id": p.advisory_id,
+                "advisory_url": p.advisory_url,
+                "patch_date": p.patch_date.isoformat() if p.patch_date else None,
+                "source": p.source,
+            }
+            for p in v.patches
+        ]
+    )
     return (
         v.cve_id,
         v.description,
@@ -204,9 +207,7 @@ class SQLiteVulnRepository(VulnRepository):
 
     async def find_by_cve_id(self, cve_id: str) -> Vulnerability | None:
         async with self._connect() as db:
-            cursor = await db.execute(
-                "SELECT * FROM vulnerabilities WHERE cve_id = ?", (cve_id,)
-            )
+            cursor = await db.execute("SELECT * FROM vulnerabilities WHERE cve_id = ?", (cve_id,))
             row = await cursor.fetchone()
             return _row_to_vuln(row) if row else None
 
@@ -240,13 +241,15 @@ class SQLiteVulnRepository(VulnRepository):
             for p in patches:
                 key = (p.advisory_id, p.source)
                 if key not in existing_ids:
-                    merged.append({
-                        "fixed_version": p.fixed_version,
-                        "advisory_id": p.advisory_id,
-                        "advisory_url": p.advisory_url,
-                        "patch_date": p.patch_date.isoformat() if p.patch_date else None,
-                        "source": p.source,
-                    })
+                    merged.append(
+                        {
+                            "fixed_version": p.fixed_version,
+                            "advisory_id": p.advisory_id,
+                            "advisory_url": p.advisory_url,
+                            "patch_date": p.patch_date.isoformat() if p.patch_date else None,
+                            "source": p.source,
+                        }
+                    )
 
             await db.execute(
                 "UPDATE vulnerabilities SET patches = ? WHERE cve_id = ?",
@@ -298,19 +301,19 @@ class SQLiteProductRepository(ProductRepository):
                 product=entry["product"],
                 version=entry["version"],
             )
-            products.append(Product(
-                name=entry.get("title") or cpe.display_name,
-                cpe=cpe,
-                vendor=entry["vendor"],
-                version=entry["version"],
-            ))
+            products.append(
+                Product(
+                    name=entry.get("title") or cpe.display_name,
+                    cpe=cpe,
+                    vendor=entry["vendor"],
+                    version=entry["version"],
+                )
+            )
         return products
 
     async def find_by_cpe(self, cpe_uri: str) -> Product | None:
         async with self._connect() as db:
-            cursor = await db.execute(
-                "SELECT * FROM cpe_dictionary WHERE cpe_uri = ?", (cpe_uri,)
-            )
+            cursor = await db.execute("SELECT * FROM cpe_dictionary WHERE cpe_uri = ?", (cpe_uri,))
             row = await cursor.fetchone()
             if not row:
                 return None
@@ -338,7 +341,14 @@ class SQLiteProductRepository(ProductRepository):
                     """INSERT INTO cpe_dictionary (cpe_uri, part, vendor, product, version, title)
                        VALUES (?, ?, ?, ?, ?, ?)
                        ON CONFLICT(cpe_uri) DO UPDATE SET title=excluded.title""",
-                    (c["cpe_uri"], c["part"], c["vendor"], c["product"], c["version"], c.get("title", "")),
+                    (
+                        c["cpe_uri"],
+                        c["part"],
+                        c["vendor"],
+                        c["product"],
+                        c["version"],
+                        c.get("title", ""),
+                    ),
                 )
                 await db.execute(
                     "INSERT OR REPLACE INTO cpe_fts(rowid, cpe_uri, vendor, product, title) "

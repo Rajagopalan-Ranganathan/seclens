@@ -13,7 +13,7 @@ class TestParseGitHubUrl:
         assert repo == "flask"
 
     def test_with_git_suffix(self):
-        owner, repo = parse_github_url("https://github.com/owner/repo.git")
+        _owner, repo = parse_github_url("https://github.com/owner/repo.git")
         assert repo == "repo"
 
     def test_no_scheme(self):
@@ -51,7 +51,9 @@ class TestDependency:
 
     def test_is_vulnerable(self):
         d = Dependency(
-            name="a", version="1.0", ecosystem="PyPI",
+            name="a",
+            version="1.0",
+            ecosystem="PyPI",
             vulnerabilities=[DependencyVuln(vuln_id="GHSA-1")],
         )
         assert d.is_vulnerable is True
@@ -62,7 +64,9 @@ class TestDependency:
 
     def test_critical_count(self):
         d = Dependency(
-            name="a", version="1.0", ecosystem="PyPI",
+            name="a",
+            version="1.0",
+            ecosystem="PyPI",
             vulnerabilities=[
                 DependencyVuln(vuln_id="1", severity="CRITICAL"),
                 DependencyVuln(vuln_id="2", severity="HIGH"),
@@ -74,7 +78,9 @@ class TestDependency:
 
     def test_has_fix(self):
         d = Dependency(
-            name="a", version="1.0", ecosystem="PyPI",
+            name="a",
+            version="1.0",
+            ecosystem="PyPI",
             vulnerabilities=[
                 DependencyVuln(vuln_id="1", fixed_version="2.0"),
             ],

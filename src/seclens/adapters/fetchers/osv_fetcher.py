@@ -39,7 +39,9 @@ class OSVApiFetcher(OSVFetcherPort):
         if not deps:
             return deps
 
-        queryable = [(i, d) for i, d in enumerate(deps) if d.version and d.ecosystem in _ECOSYSTEM_MAP]
+        queryable = [
+            (i, d) for i, d in enumerate(deps) if d.version and d.ecosystem in _ECOSYSTEM_MAP
+        ]
 
         for batch_start in range(0, len(queryable), BATCH_SIZE):
             batch = queryable[batch_start : batch_start + BATCH_SIZE]
@@ -56,7 +58,7 @@ class OSVApiFetcher(OSVFetcherPort):
                     resp = await client.post(OSV_BATCH_URL, json={"queries": queries})
                     resp.raise_for_status()
                     data = resp.json()
-            except Exception:
+            except (httpx.HTTPError, OSError, ValueError):
                 logger.warning("OSV batch query failed for batch starting at %d", batch_start)
                 continue
 

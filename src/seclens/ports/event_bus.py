@@ -15,5 +15,7 @@ class EventBus(ABC):
         """Publish a domain event to all subscribers."""
 
     @abstractmethod
-    def subscribe(self, event_type: type[DomainEvent], handler: Callable[[DomainEvent], Any]) -> None:
+    def subscribe(
+        self, event_type: type[DomainEvent], handler: Callable[[DomainEvent], Any]
+    ) -> None:
         """Register a handler for a specific event type."""

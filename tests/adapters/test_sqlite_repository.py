@@ -101,14 +101,16 @@ async def test_not_found(vuln_repo):
 
 @pytest.mark.asyncio
 async def test_save_and_resolve_cpe(product_repo):
-    entries = [{
-        "cpe_uri": "cpe:2.3:a:apache:http_server:2.4.51:*:*:*:*:*:*:*",
-        "part": "a",
-        "vendor": "apache",
-        "product": "http_server",
-        "version": "2.4.51",
-        "title": "Apache HTTP Server 2.4.51",
-    }]
+    entries = [
+        {
+            "cpe_uri": "cpe:2.3:a:apache:http_server:2.4.51:*:*:*:*:*:*:*",
+            "part": "a",
+            "vendor": "apache",
+            "product": "http_server",
+            "version": "2.4.51",
+            "title": "Apache HTTP Server 2.4.51",
+        }
+    ]
     saved = await product_repo.save_cpe_dictionary(entries)
     assert saved == 1
 
@@ -119,14 +121,16 @@ async def test_save_and_resolve_cpe(product_repo):
 
 @pytest.mark.asyncio
 async def test_search_products(product_repo):
-    entries = [{
-        "cpe_uri": "cpe:2.3:o:redhat:enterprise_linux:9.0:*:*:*:*:*:*:*",
-        "part": "o",
-        "vendor": "redhat",
-        "product": "enterprise_linux",
-        "version": "9.0",
-        "title": "Red Hat Enterprise Linux 9",
-    }]
+    entries = [
+        {
+            "cpe_uri": "cpe:2.3:o:redhat:enterprise_linux:9.0:*:*:*:*:*:*:*",
+            "part": "o",
+            "vendor": "redhat",
+            "product": "enterprise_linux",
+            "version": "9.0",
+            "title": "Red Hat Enterprise Linux 9",
+        }
+    ]
     await product_repo.save_cpe_dictionary(entries)
 
     products = await product_repo.search_products("redhat")

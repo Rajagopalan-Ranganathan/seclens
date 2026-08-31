@@ -31,7 +31,7 @@ class RedHatAdvisoryFetcher:
                     return []
                 resp.raise_for_status()
                 data = resp.json()
-        except Exception:
+        except (httpx.HTTPError, OSError, ValueError):
             logger.debug("Red Hat API unavailable for %s", cve_id)
             return []
 
@@ -46,20 +46,24 @@ class RedHatAdvisoryFetcher:
             raw_date = fix.get("release_date")
             if raw_date:
                 try:
-                    patch_date = datetime.strptime(raw_date, "%Y-%m-%dT%H:%M:%SZ").date()
+                    patch_date = datetime.fromisoformat(raw_date).date()
                 except (ValueError, TypeError):
                     try:
                         patch_date = date.fromisoformat(raw_date[:10])
                     except (ValueError, TypeError):
                         pass
 
-            patches.append(PatchInfo(
-                fixed_version=fixed_version,
-                advisory_id=advisory,
-                advisory_url=f"https://access.redhat.com/errata/{advisory}" if advisory else None,
-                patch_date=patch_date,
-                source="redhat",
-            ))
+            patches.append(
+                PatchInfo(
+                    fixed_version=fixed_version,
+                    advisory_id=advisory,
+                    advisory_url=f"https://access.redhat.com/errata/{advisory}"
+                    if advisory
+                    else None,
+                    patch_date=patch_date,
+                    source="redhat",
+                )
+            )
 
         return patches
 

@@ -17,7 +17,9 @@ class VulnDataFetcher(ABC):
         """Fetch recently published/modified vulnerabilities."""
 
     @abstractmethod
-    async def fetch_all(self, start_index: int = 0, batch_size: int = 2000) -> tuple[list[Vulnerability], int]:
+    async def fetch_all(
+        self, start_index: int = 0, batch_size: int = 2000
+    ) -> tuple[list[Vulnerability], int]:
         """Fetch a batch of all vulnerabilities. Returns (vulns, total_count)."""
 
 

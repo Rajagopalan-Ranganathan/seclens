@@ -8,19 +8,27 @@ from datetime import UTC, datetime
 class ScoreBreakdown:
     """Individual factors that compose the overall security score."""
 
-    vuln_density: float        # 0-100, lower CVE count per year = higher
-    avg_severity: float        # 0-100, lower mean CVSS = higher
+    vuln_density: float  # 0-100, lower CVE count per year = higher
+    avg_severity: float  # 0-100, lower mean CVSS = higher
     exploit_likelihood: float  # 0-100, lower EPSS mean = higher
-    kev_exposure: float        # 0-100, fewer KEV entries = higher
-    patch_velocity: float      # 0-100, faster median patch time = higher
-    unpatched_ratio: float     # 0-100, fewer unpatched CVEs = higher
+    kev_exposure: float  # 0-100, fewer KEV entries = higher
+    patch_velocity: float  # 0-100, faster median patch time = higher
+    unpatched_ratio: float  # 0-100, fewer unpatched CVEs = higher
 
 
 GRADE_THRESHOLDS = [
-    (97, "A+"), (93, "A"), (90, "A-"),
-    (87, "B+"), (83, "B"), (80, "B-"),
-    (77, "C+"), (73, "C"), (70, "C-"),
-    (67, "D+"), (63, "D"), (60, "D-"),
+    (97, "A+"),
+    (93, "A"),
+    (90, "A-"),
+    (87, "B+"),
+    (83, "B"),
+    (80, "B-"),
+    (77, "C+"),
+    (73, "C"),
+    (70, "C-"),
+    (67, "D+"),
+    (63, "D"),
+    (60, "D-"),
 ]
 
 

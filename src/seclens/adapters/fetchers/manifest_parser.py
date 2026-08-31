@@ -26,9 +26,17 @@ MANIFEST_FILES: dict[str, str] = {
 }
 
 PREFERRED_MANIFESTS = [
-    "go.mod", "requirements.txt", "package.json", "Cargo.toml",
-    "pom.xml", "Gemfile", "pyproject.toml", "Pipfile.lock",
-    "package-lock.json", "Cargo.lock", "Gemfile.lock",
+    "go.mod",
+    "requirements.txt",
+    "package.json",
+    "Cargo.toml",
+    "pom.xml",
+    "Gemfile",
+    "pyproject.toml",
+    "Pipfile.lock",
+    "package-lock.json",
+    "Cargo.lock",
+    "Gemfile.lock",
 ]
 
 
@@ -53,7 +61,7 @@ def parse_requirements_txt(content: str) -> list[Dependency]:
     deps: list[Dependency] = []
     for line in content.splitlines():
         line = line.strip()
-        if not line or line.startswith("#") or line.startswith("-"):
+        if not line or line.startswith(("#", "-")):
             continue
         m = re.match(r"^([a-zA-Z0-9_\-\.]+)\s*([=<>!~]+\s*[\d\w\.\*\-]+)?", line)
         if m:
@@ -81,7 +89,9 @@ def parse_go_mod(content: str) -> list[Dependency]:
                 module = parts[0]
                 version = parts[1].lstrip("v")
                 if "// indirect" in line:
-                    deps.append(Dependency(name=module, version=version, ecosystem="Go", is_direct=False))
+                    deps.append(
+                        Dependency(name=module, version=version, ecosystem="Go", is_direct=False)
+                    )
                 else:
                     deps.append(Dependency(name=module, version=version, ecosystem="Go"))
     return deps
@@ -97,7 +107,9 @@ def parse_package_json(content: str) -> list[Dependency]:
     for section, is_direct in [("dependencies", True), ("devDependencies", False)]:
         for name, version_spec in data.get(section, {}).items():
             version = re.sub(r"[\^~>=<\s]", "", version_spec).strip()
-            deps.append(Dependency(name=name, version=version, ecosystem="npm", is_direct=is_direct))
+            deps.append(
+                Dependency(name=name, version=version, ecosystem="npm", is_direct=is_direct)
+            )
     return deps
 
 
@@ -119,16 +131,24 @@ def parse_cargo_toml(content: str) -> list[Dependency]:
         if in_deps or in_dev_deps:
             m = re.match(r'^([a-zA-Z0-9_\-]+)\s*=\s*"([^"]*)"', stripped)
             if m:
-                deps.append(Dependency(
-                    name=m.group(1), version=m.group(2),
-                    ecosystem="crates.io", is_direct=in_deps,
-                ))
+                deps.append(
+                    Dependency(
+                        name=m.group(1),
+                        version=m.group(2),
+                        ecosystem="crates.io",
+                        is_direct=in_deps,
+                    )
+                )
             m2 = re.match(r'^([a-zA-Z0-9_\-]+)\s*=\s*\{.*version\s*=\s*"([^"]*)"', stripped)
             if m2:
-                deps.append(Dependency(
-                    name=m2.group(1), version=m2.group(2),
-                    ecosystem="crates.io", is_direct=in_deps,
-                ))
+                deps.append(
+                    Dependency(
+                        name=m2.group(1),
+                        version=m2.group(2),
+                        ecosystem="crates.io",
+                        is_direct=in_deps,
+                    )
+                )
     return deps
 
 
