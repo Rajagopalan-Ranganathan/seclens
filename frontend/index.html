@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>seclens</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div id="app">
+        <div id="hero" class="hero">
+            <h1 class="logo">sec<span class="accent">lens</span></h1>
+            <p class="tagline">Security scorecard for any software or hardware</p>
+            <form id="search-form" class="search-form">
+                <div class="search-box">
+                    <input
+                        type="text"
+                        id="search-input"
+                        placeholder="Search a product or paste a GitHub URL..."
+                        autocomplete="off"
+                        autofocus
+                    >
+                    <button type="submit" class="search-btn" aria-label="Search">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path d="M21 21l-4.35-4.35"/>
+                        </svg>
+                    </button>
+                </div>
+            </form>
+            <div class="quick-links">
+                <span>Try:</span>
+                <a href="#" data-query="RHEL 9">RHEL 9</a>
+                <a href="#" data-query="openssl">OpenSSL</a>
+                <a href="#" data-query="apache http_server">Apache httpd</a>
+                <a href="#" data-query="linux kernel">Linux Kernel</a>
+                <a href="#" data-query="windows 11">Windows 11</a>
+                <a href="#" data-query="https://github.com/pallets/flask">github.com/pallets/flask</a>
+            </div>
+            <button id="scoring-toggle" class="scoring-toggle" onclick="toggleScoringInfo()">How does scoring work?</button>
+            <div id="scoring-info" class="scoring-info hidden">
+                <h3>The seclens Score</h3>
+                <p>Every product gets a <strong>0&ndash;100 security score</strong> (higher = more secure) and a letter grade from A+ to F, computed from six factors:</p>
+                <table class="scoring-table">
+                    <thead>
+                        <tr>
+                            <th>Factor</th>
+                            <th>Weight</th>
+                            <th>What it measures</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>KEV Exposure</td>
+                            <td>20%</td>
+                            <td>Ratio of CVEs on the CISA Known Exploited Vulnerabilities list &mdash; fewer = higher score</td>
+                        </tr>
+                        <tr>
+                            <td>Patch Velocity</td>
+                            <td>20%</td>
+                            <td>Median days between CVE publication and fix &mdash; faster patching = higher score</td>
+                        </tr>
+                        <tr>
+                            <td>Unpatched Ratio</td>
+                            <td>20%</td>
+                            <td>Percentage of CVEs with no known fix &mdash; fewer unpatched = higher score</td>
+                        </tr>
+                        <tr>
+                            <td>Average Severity</td>
+                            <td>15%</td>
+                            <td>Mean effective CVSS &mdash; patched CVEs count at half severity since active risk is reduced</td>
+                        </tr>
+                        <tr>
+                            <td>Exploit Likelihood</td>
+                            <td>15%</td>
+                            <td>Mean EPSS score &mdash; lower probability of real-world exploitation = higher score</td>
+                        </tr>
+                        <tr>
+                            <td>Vulnerability Density</td>
+                            <td>10%</td>
+                            <td>Total CVEs relative to product age (log scale) &mdash; heavily-audited products aren't penalized</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="data-sources" style="margin-top:0.75rem;">
+                    <h4>Product Data Sources</h4>
+                    <ul>
+                        <li><a href="https://nvd.nist.gov" target="_blank">NVD</a> &mdash; CVE vulnerability data, CVSS scores, CPE product identifiers, and patch version info</li>
+                        <li><a href="https://www.first.org/epss/" target="_blank">EPSS</a> &mdash; Exploit Prediction Scoring System, probability of real-world exploitation within 30 days</li>
+                        <li><a href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog" target="_blank">CISA KEV</a> &mdash; Known Exploited Vulnerabilities catalog, confirmed actively exploited CVEs</li>
+                    </ul>
+                </div>
+
+                <h3 style="margin-top:1.5rem;">GitHub Project Score</h3>
+                <p>When you paste a <strong>GitHub repository URL</strong>, seclens analyzes the project's dependencies and repository security posture. The score is computed from three factors:</p>
+                <table class="scoring-table">
+                    <thead>
+                        <tr>
+                            <th>Factor</th>
+                            <th>Weight</th>
+                            <th>What it measures</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Dependency Risk</td>
+                            <td>50%</td>
+                            <td>Vulnerable dependencies, severity of their CVEs, and whether fixes are available</td>
+                        </tr>
+                        <tr>
+                            <td>Repo Posture</td>
+                            <td>30%</td>
+                            <td>Branch protection, secret scanning, code scanning, dependency updates (Dependabot/Renovate/Konflux), license, and maintenance activity</td>
+                        </tr>
+                        <tr>
+                            <td>Supply Chain</td>
+                            <td>20%</td>
+                            <td>Pinned dependency versions and direct vs. transitive vulnerability exposure</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="data-sources" style="margin-top:0.75rem;">
+                    <h4>Project Data Sources</h4>
+                    <ul>
+                        <li><a href="https://docs.github.com/en/rest/dependency-graph/sboms" target="_blank">GitHub SBOM API</a> &mdash; full dependency graph including transitive deps (falls back to manifest parsing)</li>
+                        <li><a href="https://osv.dev" target="_blank">OSV.dev</a> &mdash; Open Source Vulnerabilities database for dependency CVE lookup</li>
+                        <li><a href="https://docs.github.com/en/rest" target="_blank">GitHub REST API</a> &mdash; repository metadata, branch protection, security features</li>
+                    </ul>
+                </div>
+
+                <div class="grade-scale">
+                    <h4>Grade Scale (both scoring types)</h4>
+                    <div class="grades">
+                        <span class="grade-chip grade-a">A+ 97&ndash;100</span>
+                        <span class="grade-chip grade-a">A 93&ndash;96</span>
+                        <span class="grade-chip grade-a">A- 90&ndash;92</span>
+                        <span class="grade-chip grade-b">B+ 87&ndash;89</span>
+                        <span class="grade-chip grade-b">B 83&ndash;86</span>
+                        <span class="grade-chip grade-b">B- 80&ndash;82</span>
+                        <span class="grade-chip grade-c">C+ 77&ndash;79</span>
+                        <span class="grade-chip grade-c">C 73&ndash;76</span>
+                        <span class="grade-chip grade-c">C- 70&ndash;72</span>
+                        <span class="grade-chip grade-d">D+ 67&ndash;69</span>
+                        <span class="grade-chip grade-d">D 63&ndash;66</span>
+                        <span class="grade-chip grade-d">D- 60&ndash;62</span>
+                        <span class="grade-chip grade-f">F &lt;60</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="results" class="results hidden">
+            <div class="results-header">
+                <a href="#" id="back-btn" class="back-link">&larr; New search</a>
+                <span id="results-summary" class="results-summary"></span>
+            </div>
+            <div id="results-list" class="results-list"></div>
+        </div>
+
+        <div id="scorecard" class="scorecard hidden"></div>
+
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+            <p id="loading-text">Searching...</p>
+        </div>
+
+        <div id="error" class="error-msg hidden"></div>
+    </div>
+
+    <footer class="footer">
+        <p>Data from <a href="https://nvd.nist.gov" target="_blank">NVD</a>,
+        <a href="https://www.first.org/epss/" target="_blank">EPSS</a>,
+        <a href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog" target="_blank">CISA KEV</a></p>
+    </footer>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+# Default reviewers for all changes
+* @rarangan
+
+# Security-sensitive files require explicit review
+SECURITY.md @rarangan
+.github/ @rarangan
+Containerfile @rarangan
+compose.yml @rarangan
+pyproject.toml @rarangan
+requirements.lock @rarangan

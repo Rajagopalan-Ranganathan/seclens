@@ -1,0 +1,24 @@
+services:
+  seclens:
+    build:
+      context: .
+      dockerfile: Containerfile
+    container_name: seclens
+    ports:
+      - "8000:8000"
+    volumes:
+      - seclens-data:/opt/app/data
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - NVD_API_KEY=${NVD_API_KEY:-}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  seclens-data:
+    driver: local
